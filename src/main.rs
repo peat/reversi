@@ -26,11 +26,20 @@ fn play_game() {
 
         match positions.first() {
             Some(p) => {
+                // we have an available position; play it.
                 let i = *p;
                 let t: TranscriptPosition = i.into();
                 b.play(t);
             }
-            None => break,
+            None => {
+                // no available positions to play.
+                match b.passed {
+                    // if the previous player passed, the game is over.
+                    true => break,
+                    // if the previous player played, then current player passes.
+                    false => b.pass(),
+                }
+            }
         }
     }
 

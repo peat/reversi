@@ -9,6 +9,7 @@ use std::collections::HashMap;
 pub struct Board {
     pub moves: Vec<InternalPosition>,
     pub turn: PositionState,
+    pub passed: bool, // whether the last player passed
     board: [[PositionState; Board::MAX_Y + 1]; Board::MAX_X + 1],
 }
 
@@ -19,6 +20,7 @@ impl Default for Board {
         let mut b = Board {
             moves: Vec::new(),
             turn: PositionState::Dark,
+            passed: false,
             board: [[PositionState::Empty; 8]; 8],
         };
 
@@ -155,9 +157,15 @@ impl Board {
                 self.moves.push(internal_point);
 
                 // on to the next turn!
+                self.passed = false;
                 self.turn = PositionState::opposite(self.turn);
             }
         }
+    }
+
+    pub fn pass(&mut self) {
+        self.turn = PositionState::opposite(self.turn);
+        self.passed = true;
     }
 
     fn flip(&mut self, p: &InternalPosition) {
