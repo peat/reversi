@@ -1,14 +1,39 @@
 use crate::board::Board;
 use crate::direction::Direction;
-use crate::transcript_position::TranscriptPosition;
+use crate::disk::Disk;
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum State {
+    Empty,
+    Occupied(Disk),
+}
+
+impl State {
+    pub fn opposite(b: State) -> State {
+        match b {
+            State::Empty => State::Empty,
+            State::Occupied(d) => State::Occupied(d.opposite()),
+        }
+    }
+}
+
+impl Default for State {
+    fn default() -> Self {
+        State::Empty
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
-pub struct InternalPosition {
+pub struct Position {
     pub x: usize,
     pub y: usize,
 }
 
-impl InternalPosition {
+impl Position {
+    pub fn new(x: usize, y: usize) -> Self {
+        Position { x, y }
+    }
+
     pub fn direction(&self, d: &Direction) -> Option<Self> {
         match d {
             Direction::North => self.north(),
@@ -22,7 +47,7 @@ impl InternalPosition {
         if self.y == 0 {
             None
         } else {
-            Some(InternalPosition {
+            Some(Position {
                 x: self.x,
                 y: self.y - 1,
             })
@@ -33,7 +58,7 @@ impl InternalPosition {
         if self.y == Board::MAX_Y {
             None
         } else {
-            Some(InternalPosition {
+            Some(Position {
                 x: self.x,
                 y: self.y + 1,
             })
@@ -44,7 +69,7 @@ impl InternalPosition {
         if self.x == Board::MAX_X {
             None
         } else {
-            Some(InternalPosition {
+            Some(Position {
                 x: self.x + 1,
                 y: self.y,
             })
@@ -55,32 +80,10 @@ impl InternalPosition {
         if self.x == 0 {
             None
         } else {
-            Some(InternalPosition {
+            Some(Position {
                 x: self.x - 1,
                 y: self.y,
             })
         }
-    }
-}
-
-impl From<TranscriptPosition> for InternalPosition {
-    fn from(t: TranscriptPosition) -> Self {
-        let x = match t.x {
-            'A' => 0,
-            'B' => 1,
-            'C' => 2,
-            'D' => 3,
-            'E' => 4,
-            'F' => 5,
-            'G' => 6,
-            'H' => 7,
-            _ => panic!("X value out of bounds in: {:?}", t),
-        };
-
-        if t.y < 1 || t.y > 8 {
-            panic!("Y value out of bounds in: {:?}", t)
-        };
-
-        InternalPosition { x, y: t.y - 1 }
     }
 }
