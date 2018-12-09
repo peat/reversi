@@ -8,7 +8,7 @@ pub enum Transcript {
 }
 
 impl Transcript {
-    pub fn format_vec(transcripts: &Vec<Transcript>) -> String {
+    pub fn as_string(transcripts: &[Transcript]) -> String {
         let mut output = String::new();
         for t in transcripts {
             output.push_str(&t.format());
@@ -19,7 +19,7 @@ impl Transcript {
     pub fn format(&self) -> String {
         match self {
             Transcript::Position(x, y) => format!("{}{}", x, y),
-            Transcript::Pass => format!("PP"),
+            Transcript::Pass => "PP".to_string(),
         }
     }
 

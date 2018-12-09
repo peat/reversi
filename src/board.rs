@@ -29,13 +29,13 @@ impl Default for Board {
         };
 
         // set up the opening positions
-        b = Board::set(&b, &Position::new(4, 3), &State::Occupied(Disk::Dark));
-        b = Board::set(&b, &Position::new(3, 3), &State::Occupied(Disk::Light));
-        b = Board::set(&b, &Position::new(3, 4), &State::Occupied(Disk::Dark));
-        b = Board::set(&b, &Position::new(4, 4), &State::Occupied(Disk::Light));
+        b = Board::set(&b, &Position::new(4, 3), State::Occupied(Disk::Dark));
+        b = Board::set(&b, &Position::new(3, 3), State::Occupied(Disk::Light));
+        b = Board::set(&b, &Position::new(3, 4), State::Occupied(Disk::Dark));
+        b = Board::set(&b, &Position::new(4, 4), State::Occupied(Disk::Light));
 
         // populate the opening available moves
-        b.available_moves = Board::moves_for(&b, &b.turn);
+        b.available_moves = Board::moves_for(&b, b.turn);
 
         b // clean board in starting position!
     }
@@ -61,7 +61,7 @@ impl Board {
         }
 
         // mark the position as owned by the current player
-        new_board = Board::set(&new_board, &position, &State::Occupied(new_board.turn));
+        new_board = Board::set(&new_board, &position, State::Occupied(new_board.turn));
 
         // record the move
         new_board.transcript.push(Transcript::from(*position));
@@ -78,8 +78,23 @@ impl Board {
         Board::next_turn(&new_board)
     }
 
-    pub fn score(&self, state: &State) -> usize {
+    pub fn score(&self, state: State) -> usize {
         Board::in_state(self, state).len()
+    }
+
+    pub fn from_transcript(transcript: &[Transcript]) -> Board {
+        let mut b = Board::default();
+
+        let plays: Vec<Option<Position>> = transcript.iter().map(|t| t.to_position()).collect();
+
+        for op in plays {
+            b = match op {
+                Some(p) => b.play(&p),
+                None => b.pass(),
+            }
+        }
+
+        b
     }
 
     // INSPECTION METHODS -----------------------------------------------------
@@ -105,35 +120,35 @@ impl Board {
         board.board[position.x][position.y]
     }
 
-    fn set(board: &Board, position: &Position, state: &State) -> Board {
+    fn set(board: &Board, position: &Position, state: State) -> Board {
         let mut new_board = board.clone();
-        new_board.board[position.x][position.y] = state.clone();
+        new_board.board[position.x][position.y] = state;
         new_board
     }
 
     fn flip(board: &Board, position: &Position) -> Board {
         let old_state = Board::get(&board, position);
         let new_state = State::opposite(old_state);
-        Board::set(board, position, &new_state)
+        Board::set(board, position, new_state)
     }
 
     fn next_turn(board: &Board) -> Board {
         let mut new_board = board.clone();
         new_board.turn = board.turn.opposite();
-        new_board.available_moves = Board::moves_for(&board, &new_board.turn);
+        new_board.available_moves = Board::moves_for(&board, new_board.turn);
         new_board
     }
 
     fn attempt_direction(
         board: &Board,
         position: &Position,
-        player_disk: &Disk,
+        player_disk: Disk,
         direction: &Direction,
     ) -> Option<Vec<Position>> {
         let mut found_positions = Vec::new();
 
         // placeholder while we're traversing the board
-        let mut current_position = position.clone();
+        let mut current_position = *position;
 
         loop {
             // see if we can load the next position in the given direction
@@ -149,7 +164,7 @@ impl Board {
                         State::Occupied(d) => {
                             // if our neighbor is in the same state as the player,
                             // it MIGHT mean we've been collecting flippable positions!
-                            if d == *player_disk {
+                            if d == player_disk {
                                 // if we've found flippable positions, return 'em, otherwise
                                 // return nothing.
                                 if found_positions.is_empty() {
@@ -160,7 +175,7 @@ impl Board {
                             } else {
                                 // if our neighbor is in an opposing state, it it could be a flippable
                                 // position! Collect it, and step into the neighbor position.
-                                found_positions.push(neighbor.clone());
+                                found_positions.push(neighbor);
                                 current_position = neighbor;
                             }
                         }
@@ -170,12 +185,12 @@ impl Board {
         }
     }
 
-    fn moves_for(board: &Board, disk: &Disk) -> MoveMap {
+    fn moves_for(board: &Board, disk: Disk) -> MoveMap {
         // placeholder for our playable set
         let mut playable_set = HashMap::new();
 
         // gather all of the empty, playable spaces
-        let empty_positions = Board::in_state(board, &State::Empty);
+        let empty_positions = Board::in_state(board, State::Empty);
 
         // step through each empty position and determine if it is playable.
         for position in empty_positions {
@@ -201,12 +216,12 @@ impl Board {
         playable_set
     }
 
-    fn in_state(board: &Board, s: &State) -> Vec<Position> {
+    fn in_state(board: &Board, s: State) -> Vec<Position> {
         let mut output = Vec::new();
 
-        for y in 0..Board::MAX_Y + 1 {
-            for x in 0..Board::MAX_X + 1 {
-                if board.board[x][y] == *s {
+        for y in 0..=Board::MAX_Y {
+            for x in 0..=Board::MAX_X {
+                if board.board[x][y] == s {
                     output.push(Position { x, y })
                 }
             }

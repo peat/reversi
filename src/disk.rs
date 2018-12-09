@@ -7,7 +7,7 @@ pub enum Disk {
 }
 
 impl Disk {
-    pub fn opposite(&self) -> Disk {
+    pub fn opposite(self) -> Disk {
         match self {
             Disk::Dark => Disk::Light,
             Disk::Light => Disk::Dark,

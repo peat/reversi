@@ -30,11 +30,11 @@ fn play_game() {
             options.push(Transcript::from(*p).format());
         }
 
-        println!("");
+        println!();
         println!("Total Moves: {}", b.transcript.len());
         println!("Turn: {}", b.turn);
         println!("Available: {}", options.join(", "));
-        println!("");
+        println!();
 
         b = match positions.first() {
             Some(p) => {
@@ -43,11 +43,12 @@ fn play_game() {
             }
             None => {
                 // no available positions to play.
-                match b.passed {
+                if b.passed {
                     // if the previous player passed, the game is over.
-                    true => break,
+                    break;
+                } else {
                     // if the previous player played, then current player passes.
-                    false => b.pass(),
+                    b.pass()
                 }
             }
         };
@@ -55,8 +56,8 @@ fn play_game() {
         b.pp();
     }
 
-    println!("Transcript: {}", Transcript::format_vec(&b.transcript));
-    println!("Dark score: {}", b.score(&State::Occupied(Disk::Dark)));
-    println!("Light score: {}", b.score(&State::Occupied(Disk::Light)));
-    println!("");
+    println!("Transcript: {}", Transcript::as_string(&b.transcript));
+    println!("Dark score: {}", b.score(State::Occupied(Disk::Dark)));
+    println!("Light score: {}", b.score(State::Occupied(Disk::Light)));
+    println!();
 }
