@@ -16,34 +16,36 @@ fn main() {
     let original_game = generate_game();
     println!("Generated in {:?}", timer.elapsed());
 
-    println!("\n------------");
+    println!("\n------------\n");
 
     // generate a String transcript of the original game
     let transcript = Transcript::stringify(&original_game.transcript);
 
     // replay the transcript on a fresh board, so we can check to see if it matches.
-    timer = Instant::now();
+    println!("Generating board from transcript: {}\n", transcript);
     let copy_game = play_transcript(&transcript);
-    println!("Replayed in {:?}", timer.elapsed());
+    copy_game.pp();
 
     if copy_game == original_game {
-        println!("... They match!");
+        println!("\n... They match!");
     } else {
-        println!("NOT MATCHING!");
+        println!("\nNOT MATCHING!");
     }
+
+    println!("\n------------\n");
+
+    let loops = 1_000;
+    println!("Benchmarking with {} replays ...", loops);
+    timer = Instant::now();
+    for _ in 0..loops {
+        play_transcript(&transcript);
+    }
+    println!("Finished in {:?}\n", timer.elapsed());
 }
 
 fn play_transcript(transcript: &str) -> Board {
-    println!();
-    println!("Generating board from transcript: {}", transcript);
-    println!();
-
     let vec_t = Transcript::from_string(&transcript);
-    let b = Board::from_transcript(&vec_t);
-
-    b.pp();
-    println!();
-    b
+    Board::from_transcript(&vec_t)
 }
 
 fn generate_game() -> Board {
