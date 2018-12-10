@@ -29,10 +29,10 @@ impl Default for Board {
         };
 
         // set up the opening positions
-        b = Board::set(&b, &Position::new(4, 3), State::Occupied(Disk::Dark));
-        b = Board::set(&b, &Position::new(3, 3), State::Occupied(Disk::Light));
-        b = Board::set(&b, &Position::new(3, 4), State::Occupied(Disk::Dark));
-        b = Board::set(&b, &Position::new(4, 4), State::Occupied(Disk::Light));
+        b = Board::set(b, &Position::new(4, 3), State::Occupied(Disk::Dark));
+        b = Board::set(b, &Position::new(3, 3), State::Occupied(Disk::Light));
+        b = Board::set(b, &Position::new(3, 4), State::Occupied(Disk::Dark));
+        b = Board::set(b, &Position::new(4, 4), State::Occupied(Disk::Light));
 
         // populate the opening available moves
         b.available_moves = Board::moves_for(&b, b.turn);
@@ -57,11 +57,12 @@ impl Board {
 
         // flip 'em
         for a in affected.clone() {
-            new_board = Board::flip(&new_board, &a);
+            new_board = Board::flip(new_board, &a);
         }
 
         // mark the position as owned by the current player
-        new_board = Board::set(&new_board, &position, State::Occupied(new_board.turn));
+        let occupied_by = State::Occupied(new_board.turn);
+        new_board = Board::set(new_board, &position, occupied_by);
 
         // record the move
         new_board.transcript.push(Transcript::from(*position));
@@ -120,13 +121,12 @@ impl Board {
         board.board[position.x][position.y]
     }
 
-    fn set(board: &Board, position: &Position, state: State) -> Board {
-        let mut new_board = board.clone();
-        new_board.board[position.x][position.y] = state;
-        new_board
+    fn set(mut board: Board, position: &Position, state: State) -> Board {
+        board.board[position.x][position.y] = state;
+        board
     }
 
-    fn flip(board: &Board, position: &Position) -> Board {
+    fn flip(board: Board, position: &Position) -> Board {
         let old_state = Board::get(&board, position);
         let new_state = State::opposite(old_state);
         Board::set(board, position, new_state)
