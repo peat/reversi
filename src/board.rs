@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 type MoveMap = HashMap<Position, Vec<Position>>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub transcript: Vec<Transcript>, // the history of plays on this board
     pub turn: Disk,                  // who is currently playing
@@ -47,8 +47,8 @@ impl Board {
 
     // GAME PLAY METHODS ------------------------------------------------------
 
-    pub fn play(&self, position: &Position) -> Self {
-        let mut new_board = self.clone();
+    pub fn play(board: &Board, position: &Position) -> Self {
+        let mut new_board = board.clone();
 
         let affected = match new_board.available_moves.get(&position) {
             None => return new_board,
@@ -71,15 +71,15 @@ impl Board {
         Board::next_turn(&new_board)
     }
 
-    pub fn pass(&self) -> Self {
-        let mut new_board = self.clone();
+    pub fn pass(board: &Board) -> Self {
+        let mut new_board = board.clone();
         new_board.passed = true;
         new_board.transcript.push(Transcript::Pass);
         Board::next_turn(&new_board)
     }
 
-    pub fn score(&self, state: State) -> usize {
-        Board::in_state(self, state).len()
+    pub fn score(board: &Board, disk: Disk) -> usize {
+        Board::in_state(board, State::Occupied(disk)).len()
     }
 
     pub fn from_transcript(transcript: &[Transcript]) -> Board {
@@ -89,8 +89,8 @@ impl Board {
 
         for op in plays {
             b = match op {
-                Some(p) => b.play(&p),
-                None => b.pass(),
+                Some(p) => Board::play(&b, &p),
+                None => Board::pass(&b),
             }
         }
 

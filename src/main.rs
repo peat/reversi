@@ -6,27 +6,56 @@ mod transcript;
 
 use crate::board::Board;
 use crate::disk::Disk;
-use crate::position::State;
 use crate::transcript::Transcript;
 
+use std::time::Instant;
+
 fn main() {
-    for _ in 0..1 {
-        play_game();
+    // play through an entire game, with random moves
+    let mut timer = Instant::now();
+    let original_game = generate_game();
+    println!("Generated in {:?}", timer.elapsed());
+
+    println!("\n------------");
+
+    // generate a String transcript of the original game
+    let transcript = Transcript::stringify(&original_game.transcript);
+
+    // replay the transcript on a fresh board, so we can check to see if it matches.
+    timer = Instant::now();
+    let copy_game = play_transcript(&transcript);
+    println!("Replayed in {:?}", timer.elapsed());
+
+    if copy_game == original_game {
+        println!("... They match!");
+    } else {
+        println!("NOT MATCHING!");
     }
 }
 
-fn play_game() {
+fn play_transcript(transcript: &str) -> Board {
+    println!();
+    println!("Generating board from transcript: {}", transcript);
+    println!();
+
+    let vec_t = Transcript::from_string(&transcript);
+    let b = Board::from_transcript(&vec_t);
+
+    b.pp();
+    println!();
+    b
+}
+
+fn generate_game() -> Board {
     let mut b = Board::default();
     b.pp();
 
     loop {
         let mut positions = Vec::new();
+        let mut options = Vec::new();
+
         for p in b.available_moves.keys() {
             positions.push(p.clone());
-        }
-
-        let mut options = Vec::new();
-        for p in b.available_moves.keys() {
             options.push(Transcript::from(*p).format());
         }
 
@@ -39,7 +68,7 @@ fn play_game() {
         b = match positions.first() {
             Some(p) => {
                 // we have an available position; play it.
-                b.play(p)
+                Board::play(&b, p)
             }
             None => {
                 // no available positions to play.
@@ -48,7 +77,7 @@ fn play_game() {
                     break;
                 } else {
                     // if the previous player played, then current player passes.
-                    b.pass()
+                    Board::pass(&b)
                 }
             }
         };
@@ -56,8 +85,10 @@ fn play_game() {
         b.pp();
     }
 
-    println!("Transcript: {}", Transcript::as_string(&b.transcript));
-    println!("Dark score: {}", b.score(State::Occupied(Disk::Dark)));
-    println!("Light score: {}", b.score(State::Occupied(Disk::Light)));
+    println!("Transcript: {}", Transcript::stringify(&b.transcript));
+    println!("Dark score: {}", Board::score(&b, Disk::Dark));
+    println!("Light score: {}", Board::score(&b, Disk::Light));
     println!();
+
+    b
 }
