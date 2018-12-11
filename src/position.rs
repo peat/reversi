@@ -9,7 +9,7 @@ pub enum State {
 }
 
 impl State {
-    pub fn opposite(b: State) -> State {
+    pub fn opposite(b: State) -> Self {
         match b {
             State::Empty => State::Empty,
             State::Occupied(d) => State::Occupied(d.opposite()),
@@ -37,9 +37,13 @@ impl Position {
     pub fn direction(&self, d: &Direction) -> Option<Self> {
         match d {
             Direction::North => self.north(),
+            Direction::NorthEast => self.north_east(),
             Direction::East => self.east(),
+            Direction::SouthEast => self.south_east(),
             Direction::South => self.south(),
+            Direction::SouthWest => self.south_west(),
             Direction::West => self.west(),
+            Direction::NorthWest => self.north_west(),
         }
     }
 
@@ -54,6 +58,14 @@ impl Position {
         }
     }
 
+    fn north_east(&self) -> Option<Self> {
+        self.north()?.east()
+    }
+
+    fn north_west(&self) -> Option<Self> {
+        self.north()?.west()
+    }
+
     fn south(&self) -> Option<Self> {
         if self.y == Board::MAX_Y {
             None
@@ -63,6 +75,10 @@ impl Position {
                 y: self.y + 1,
             })
         }
+    }
+
+    fn south_east(&self) -> Option<Self> {
+        self.south()?.east()
     }
 
     fn east(&self) -> Option<Self> {
@@ -85,5 +101,9 @@ impl Position {
                 y: self.y,
             })
         }
+    }
+
+    fn south_west(&self) -> Option<Self> {
+        self.south()?.west()
     }
 }
