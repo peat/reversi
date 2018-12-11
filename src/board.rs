@@ -2,7 +2,7 @@ use crate::direction::Direction;
 use crate::disk::Disk;
 use crate::position::Position;
 use crate::transcript::Transcript;
-use crate::grid::{Grid, State};
+use crate::grid::{Grid, GridIterator, State, MAX_X, MAX_Y};
 
 #[derive(Clone, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
 struct ValidMove {
@@ -10,7 +10,25 @@ struct ValidMove {
     affected: Vec<Position>
 }
 
+struct MoveIterator {
+    grid_iterator: GridIterator
+}
 
+impl Iterator for MoveIterator {
+    type Item = ValidMove;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.grid_iterator.next() {
+                Some((position, State::Empty)) => {
+                ...
+                } 
+                None => return None,
+                _ => continue,
+            }
+        }
+        None
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
@@ -53,8 +71,6 @@ impl Default for Board {
 }
 
 impl Board {
-    pub const MAX_X: usize = 7;
-    pub const MAX_Y: usize = 7;
 
     // GAME PLAY METHODS ------------------------------------------------------
 
@@ -190,8 +206,8 @@ impl Board {
         let mut light_count = 0;
         let mut empty_count = 0;
 
-        for y in 0..=Board::MAX_Y {
-            for x in 0..=Board::MAX_X {
+        for y in 0..=MAX_Y {
+            for x in 0..=MAX_X {
                 match board.grid.get(x,y) {
                     State::Empty => empty_count += 1,
                     State::Dark => dark_count += 1,
@@ -205,8 +221,8 @@ impl Board {
 
     fn in_state(board: &Board, state: State) -> Vec<Position> {
         let mut output = Vec::new();
-        for y in 0..=Board::MAX_Y {
-            for x in 0..=Board::MAX_X {
+        for y in 0..=MAX_Y {
+            for x in 0..=MAX_X {
                 if board.grid.get(x,y) == state {
                     output.push(Position { x, y} );
                 }

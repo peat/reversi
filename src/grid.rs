@@ -1,3 +1,5 @@
+use crate::position::Position;
+
 pub const MAX_X: usize = 7;
 pub const MAX_Y: usize = 7;
 
@@ -42,5 +44,47 @@ impl Grid {
         let s = self.get(x, y).opposite();
         self.set(x, y, s);
         s
+    }
+
+    pub fn iter(&self) -> GridIterator {
+        GridIterator::new(self)
+    }
+}
+
+pub struct GridIterator {
+    index: usize,
+    grid: Grid,
+}
+
+impl GridIterator {
+    pub fn new(grid: &Grid) -> Self {
+        GridIterator {
+            index: 0,
+            grid: grid.clone(),
+        }
+    }
+}
+
+impl Iterator for GridIterator {
+    type Item = (Position, State);
+    fn next(&mut self) -> Option<Self::Item> {
+        // check to see if our index is out of bounds.
+        if self.index >= (MAX_X + 1) * (MAX_Y + 1) {
+            return None;
+        }
+
+        // convert index into X and Y coordinates.
+        let x = self.index % (MAX_X + 1);
+        let y = self.index / (MAX_Y + 1);
+
+        // build the response.
+        let position = Position { x, y };
+        let state = self.grid.get(x, y);
+
+        // increment the index
+        self.index += 1;
+
+        // result!
+        Some((position, state))
     }
 }

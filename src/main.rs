@@ -9,6 +9,7 @@ mod transcript;
 use crate::board::Board;
 use crate::disk::Disk;
 use crate::game::Game;
+use crate::grid::{Grid, GridIterator};
 use crate::transcript::Transcript;
 
 use std::time::Instant;

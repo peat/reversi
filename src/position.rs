@@ -1,5 +1,5 @@
-use crate::board::Board;
 use crate::direction::Direction;
+use crate::grid::{MAX_X, MAX_Y};
 
 #[derive(Clone, Copy, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
 pub struct Position {
@@ -45,7 +45,7 @@ impl Position {
     }
 
     fn south(&self) -> Option<Self> {
-        if self.y == Board::MAX_Y {
+        if self.y == MAX_Y {
             None
         } else {
             Some(Position {
@@ -60,7 +60,7 @@ impl Position {
     }
 
     fn east(&self) -> Option<Self> {
-        if self.x == Board::MAX_X {
+        if self.x == MAX_X {
             None
         } else {
             Some(Position {
