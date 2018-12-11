@@ -29,8 +29,8 @@ impl Default for Board {
         };
 
         // set up the opening positions
-        b = Board::set(b, &Position::new(4, 3), State::Occupied(Disk::Dark));
         b = Board::set(b, &Position::new(3, 3), State::Occupied(Disk::Light));
+        b = Board::set(b, &Position::new(4, 3), State::Occupied(Disk::Dark));
         b = Board::set(b, &Position::new(3, 4), State::Occupied(Disk::Dark));
         b = Board::set(b, &Position::new(4, 4), State::Occupied(Disk::Light));
 
@@ -48,6 +48,10 @@ impl Board {
     // GAME PLAY METHODS ------------------------------------------------------
 
     pub fn play(board: &Board, position: &Position) -> Self {
+        if Board::is_complete(board) {
+            return board.clone();
+        }
+
         let mut new_board = board.clone();
 
         let affected = match new_board.available_moves.get(&position) {
@@ -73,17 +77,45 @@ impl Board {
     }
 
     pub fn pass(board: &Board) -> Self {
+        if Board::is_complete(board) {
+            return board.clone();
+        }
+
         let mut new_board = board.clone();
         new_board.passed = true;
         new_board.transcript.push(Transcript::Pass);
         Board::next_turn(&new_board)
     }
 
+    pub fn is_complete(board: &Board) -> bool {
+        board.available_moves.is_empty() && board.passed
+    }
+
     pub fn score(board: &Board, disk: Disk) -> usize {
         Board::in_state(board, State::Occupied(disk)).len()
     }
 
-    pub fn from_transcript(transcript: &[Transcript]) -> Board {
+    pub fn winner(board: &Board) -> Option<Disk> {
+        let dark = Board::score(board, Disk::Dark);
+        let light = Board::score(board, Disk::Light);
+
+        if dark > light {
+            return Some(Disk::Dark);
+        }
+
+        if light > dark {
+            return Some(Disk::Light);
+        }
+
+        // it's a tie!
+        None
+    }
+
+    pub fn transcript(board: &Board) -> String {
+        Transcript::stringify(&board.transcript)
+    }
+
+    pub fn from_transcript(transcript: &[Transcript]) -> Self {
         let mut b = Board::default();
 
         let plays: Vec<Option<Position>> = transcript.iter().map(|t| t.to_position()).collect();
@@ -97,6 +129,21 @@ impl Board {
 
         b
     }
+
+    pub fn in_state(board: &Board, s: State) -> Vec<Position> {
+        let mut output = Vec::new();
+
+        for y in 0..=Board::MAX_Y {
+            for x in 0..=Board::MAX_X {
+                if board.board[x][y] == s {
+                    output.push(Position { x, y })
+                }
+            }
+        }
+
+        output
+    }
+
 
     // INSPECTION METHODS -----------------------------------------------------
 
@@ -121,12 +168,12 @@ impl Board {
         board.board[position.x][position.y]
     }
 
-    fn set(mut board: Board, position: &Position, state: State) -> Board {
+    fn set(mut board: Board, position: &Position, state: State) -> Self {
         board.board[position.x][position.y] = state;
         board
     }
 
-    fn flip(board: Board, position: &Position) -> Board {
+    fn flip(board: Board, position: &Position) -> Self {
         let old_state = Board::get(&board, position);
         let new_state = State::opposite(old_state);
         Board::set(board, position, new_state)
@@ -214,19 +261,5 @@ impl Board {
         }
 
         playable_set
-    }
-
-    fn in_state(board: &Board, s: State) -> Vec<Position> {
-        let mut output = Vec::new();
-
-        for y in 0..=Board::MAX_Y {
-            for x in 0..=Board::MAX_X {
-                if board.board[x][y] == s {
-                    output.push(Position { x, y })
-                }
-            }
-        }
-
-        output
     }
 }
