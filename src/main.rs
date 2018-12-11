@@ -57,7 +57,7 @@ fn main() {
     println!("Iterating through {} rounds ...", rounds);
 
     timer = Instant::now();
-    let boards = Game::recurse(&Board::default(), rounds);
+    let boards = Game::breadth_recursion(&Board::default(), rounds);
 
     println!("Generated {} games in {:?}", boards.len(), timer.elapsed());
 
@@ -78,7 +78,7 @@ fn main() {
 
     partial_board.pp();
 
-    let finished = Game::recurse(&partial_board, rounds);
+    let finished = Game::breadth_recursion(&partial_board, rounds);
 
     let mut completed = 0;
     let mut dark_wins = 0;

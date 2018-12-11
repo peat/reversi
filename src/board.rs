@@ -3,19 +3,21 @@ use crate::disk::Disk;
 use crate::position::Position;
 use crate::transcript::Transcript;
 
-use std::collections::HashMap;
-
-type MoveMap = HashMap<Position, Vec<Position>>;
+#[derive(Clone, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
+struct ValidMove {
+    position: Position,
+    affected: Vec<Position>
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub transcript: Vec<Transcript>, // the history of plays on this board
     pub turn: Disk,                  // who is currently playing
     pub passed: bool,                // whether the last player passed
-    pub available_moves: MoveMap,    // the moves available to the current player
     pub light_count: usize,
     pub dark_count: usize,
     pub empty_count: usize,
+    valid_moves: Vec<ValidMove>,    // the moves available to the current player
     board: [[Option<Disk>; Board::MAX_Y + 1]; Board::MAX_X + 1],
 }
 
@@ -27,7 +29,7 @@ impl Default for Board {
             transcript: Vec::new(),
             turn: Disk::Dark,
             passed: false,
-            available_moves: HashMap::new(),
+            valid_moves: Vec::new(),
             light_count: 2,
             dark_count: 2,
             empty_count: 60,
@@ -41,7 +43,7 @@ impl Default for Board {
         b = Board::set(b, &Position::new(4, 4), Some(Disk::Light));
 
         // populate the opening available moves
-        b.available_moves = Board::moves_for(&b, b.turn);
+        b.valid_moves = Board::moves_for(&b, b.turn);
 
         b // clean board in starting position!
     }
@@ -54,13 +56,13 @@ impl Board {
     // GAME PLAY METHODS ------------------------------------------------------
 
     pub fn play(board: &Board, position: &Position) -> Self {
-        if Board::is_complete(board) {
-            return board.clone();
-        }
-
         let mut new_board = board.clone();
 
-        let affected = match new_board.available_moves.get(&position) {
+        if Board::is_complete(board) {
+            return new_board;
+        }
+
+        let affected = match Board::flips_for(board, position) {
             None => return new_board,
             Some(affected) => affected,
         };
@@ -94,12 +96,20 @@ impl Board {
         Board::next_turn(new_board)
     }
 
+    pub fn valid_moves(board: &Board) -> Option<Vec<Position>> {
+        if board.valid_moves.is_empty() {
+            return None;
+        }
+
+        Some(board.valid_moves.iter().map(|v| v.position).collect())
+    }
+
     pub fn is_complete(board: &Board) -> bool {
         // there are no more Dark or Light disks on the board
         ((board.light_count == 0) 
             | (board.dark_count == 0))
         // or no available moves, and the last person passed -- complete!
-        | (board.available_moves.is_empty() && board.passed)
+        | (board.valid_moves.is_empty() && board.passed)
     }
 
     pub fn winner(board: &Board) -> Option<Disk> {
@@ -194,6 +204,15 @@ impl Board {
         output
     }
 
+    fn flips_for(board: &Board, position: &Position) -> Option<Vec<Position>> {
+        for m in board.valid_moves.clone() {
+            if m.position == *position {
+                return Some(m.affected);
+            }
+        }
+        None
+    }
+
     fn flip(board: Board, position: &Position) -> Self {
         let new_state = match Board::get(&board, position) {
             None => None,
@@ -206,7 +225,7 @@ impl Board {
 
     fn next_turn(mut board: Board) -> Board {
         board.turn = board.turn.opposite();
-        board.available_moves = Board::moves_for(&board, board.turn);
+        board.valid_moves = Board::moves_for(&board, board.turn);
         match Board::count(&board) {
             (d, l, e) => {
                 board.dark_count = d;
@@ -263,9 +282,9 @@ impl Board {
         }
     }
 
-    fn moves_for(board: &Board, disk: Disk) -> MoveMap {
+    fn moves_for(board: &Board, disk: Disk) -> Vec<ValidMove> {
         // placeholder for our playable set
-        let mut playable_set = HashMap::new();
+        let mut playable_set = Vec::new();
 
         // gather all of the empty, playable spaces
         let empty_positions = Board::in_state(board, None);
@@ -274,20 +293,21 @@ impl Board {
         for position in empty_positions {
             // we'll collect all of the positions that would be flipped by a play at the
             // current position here
-            let mut affected_positions = Vec::new();
+            let mut affected = Vec::new();
 
             // cycle through our cardinal directions
             for direction in &Direction::ALL {
                 // if we find a play, collect the potentially affected positions
-                if let Some(affected) = Board::attempt_direction(board, &position, disk, direction)
+                if let Some(a) = Board::attempt_direction(board, &position, disk, direction)
                 {
-                    affected_positions.extend(affected);
+                    affected.extend(a);
                 }
             }
 
             // done testing all of the directions; if we have anything, stash it and move on ...
-            if !affected_positions.is_empty() {
-                playable_set.insert(position, affected_positions);
+            if !affected.is_empty() {
+                let valid_move = ValidMove { position, affected };
+                playable_set.push(valid_move);
             }
         }
         playable_set

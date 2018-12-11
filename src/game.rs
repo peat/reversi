@@ -11,6 +11,35 @@ pub struct Game {
     available_moves: Vec<Play>,
 }
 
+pub struct BreadthRecursion {
+    board: Board,
+    available_moves: Vec<Play>,
+}
+
+impl BreadthRecursion {
+    pub fn from(board: &Board) -> Self {
+        let game = Game::new(board);
+
+        BreadthRecursion {
+            board: game.board,
+            available_moves: game.available_moves,
+        }
+    }
+}
+
+impl Iterator for BreadthRecursion {
+    type Item = Board;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.available_moves.pop() {
+            None => None,
+            Some(p) => match p {
+                Play::Pass => Some(Board::pass(&self.board)),
+                Play::Place(o) => Some(Board::play(&self.board, &o)),
+            },
+        }
+    }
+}
+
 impl Game {
     pub fn new(board: &Board) -> Self {
         // handle boards that are already complete.
@@ -21,16 +50,12 @@ impl Game {
             };
         }
 
-        let available_moves = match board.available_moves.len() {
+        let available_moves = match Board::valid_moves(board) {
             // if there are no available moves on the board, our only option is to pass.
-            0 => vec![Play::Pass],
+            None => vec![Play::Pass],
 
             // collect all of the available moves ...
-            _ => board
-                .available_moves
-                .keys()
-                .map(|p| Play::Place(*p))
-                .collect(),
+            Some(ps) => ps.iter().map(|p| Play::Place(*p)).collect(),
         };
 
         Game {
@@ -42,16 +67,16 @@ impl Game {
     pub fn random(board: &Board) -> Board {
         let mut b = board.clone();
         loop {
-            b = match b.available_moves.keys().next() {
-                Some(p) => {
+            b = match Board::valid_moves(&b) {
+                Some(ps) => {
                     // we have an available position; play it.
-                    Board::play(&b, p)
+                    Board::play(&b, ps.first().unwrap())
                 }
                 None => {
                     // no available positions to play.
                     if Board::is_complete(&b) {
                         // and the game is over ...
-                        break b;
+                        return b;
                     } else {
                         // no moves, but the game isn't over, so the current player passes.
                         Board::pass(&b)
@@ -61,13 +86,13 @@ impl Game {
         }
     }
 
-    pub fn recurse(board: &Board, depth: usize) -> Vec<Board> {
+    pub fn breadth_recursion(board: &Board, depth: usize) -> Vec<Board> {
         let mut boards = vec![board.clone()];
 
         for _ in 0..depth {
             let mut results = Vec::new();
             for b in &boards {
-                for result in Game::new(&b) {
+                for result in BreadthRecursion::from(&b) {
                     results.push(result);
                 }
             }
@@ -78,18 +103,5 @@ impl Game {
             }
         }
         boards
-    }
-}
-
-impl Iterator for Game {
-    type Item = Board;
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.available_moves.pop() {
-            None => None,
-            Some(p) => match p {
-                Play::Pass => Some(Board::pass(&self.board)),
-                Play::Place(o) => Some(Board::play(&self.board, &o)),
-            },
-        }
     }
 }

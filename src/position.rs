@@ -1,7 +1,7 @@
 use crate::board::Board;
 use crate::direction::Direction;
 
-#[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
