@@ -1,6 +1,6 @@
 use crate::direction::Direction;
 use crate::disk::Disk;
-use crate::position::{Position, State};
+use crate::position::Position;
 use crate::transcript::Transcript;
 
 use std::collections::HashMap;
@@ -16,7 +16,7 @@ pub struct Board {
     pub light_count: usize,
     pub dark_count: usize,
     pub empty_count: usize,
-    board: [[State; Board::MAX_Y + 1]; Board::MAX_X + 1],
+    board: [[Option<Disk>; Board::MAX_Y + 1]; Board::MAX_X + 1],
 }
 
 impl Default for Board {
@@ -31,14 +31,14 @@ impl Default for Board {
             light_count: 2,
             dark_count: 2,
             empty_count: 60,
-            board: [[State::Empty; 8]; 8],
+            board: [[None; 8]; 8],
         };
 
         // set up the opening positions
-        b = Board::set(b, &Position::new(3, 3), State::Occupied(Disk::Light));
-        b = Board::set(b, &Position::new(4, 3), State::Occupied(Disk::Dark));
-        b = Board::set(b, &Position::new(3, 4), State::Occupied(Disk::Dark));
-        b = Board::set(b, &Position::new(4, 4), State::Occupied(Disk::Light));
+        b = Board::set(b, &Position::new(3, 3), Some(Disk::Light));
+        b = Board::set(b, &Position::new(4, 3), Some(Disk::Dark));
+        b = Board::set(b, &Position::new(3, 4), Some(Disk::Dark));
+        b = Board::set(b, &Position::new(4, 4), Some(Disk::Light));
 
         // populate the opening available moves
         b.available_moves = Board::moves_for(&b, b.turn);
@@ -71,7 +71,7 @@ impl Board {
         }
 
         // mark the position as owned by the current player
-        let occupied_by = State::Occupied(new_board.turn);
+        let occupied_by = Some(new_board.turn);
         new_board = Board::set(new_board, &position, occupied_by);
 
         // record the move
@@ -141,9 +141,9 @@ impl Board {
             print!("{}", y + 1);
             for x in 0..8 {
                 match self.board[x][y] {
-                    State::Empty => print!(" •"),
-                    State::Occupied(Disk::Dark) => print!(" D"),
-                    State::Occupied(Disk::Light) => print!(" L"),
+                    None => print!(" •"),
+                    Some(Disk::Dark) => print!(" D"),
+                    Some(Disk::Light) => print!(" L"),
                 }
             }
             println!();
@@ -152,11 +152,11 @@ impl Board {
 
     // PRIVATE METHODS --------------------------------------------------------
 
-    fn get(board: &Board, position: &Position) -> State {
+    fn get(board: &Board, position: &Position) -> Option<Disk> {
         board.board[position.x][position.y]
     }
 
-    fn set(mut board: Board, position: &Position, state: State) -> Self {
+    fn set(mut board: Board, position: &Position, state: Option<Disk>) -> Self {
         board.board[position.x][position.y] = state;
         board
     }
@@ -169,8 +169,8 @@ impl Board {
         for y in 0..=Board::MAX_Y {
             for x in 0..=Board::MAX_X {
                 match board.board[x][y] {
-                    State::Empty => empty_count += 1,
-                    State::Occupied(d) => match d {
+                    None => empty_count += 1,
+                    Some(d) => match d {
                         Disk::Dark => dark_count += 1,
                         Disk::Light => light_count += 1,
                     }
@@ -181,7 +181,7 @@ impl Board {
         (dark_count, light_count, empty_count)
     }
 
-    fn in_state(board: &Board, state: State) -> Vec<Position> {
+    fn in_state(board: &Board, state: Option<Disk>) -> Vec<Position> {
         let mut output = Vec::new();
         for y in 0..=Board::MAX_Y {
             for x in 0..=Board::MAX_X {
@@ -194,8 +194,12 @@ impl Board {
     }
 
     fn flip(board: Board, position: &Position) -> Self {
-        let old_state = Board::get(&board, position);
-        let new_state = State::opposite(old_state);
+        let new_state = match Board::get(&board, position) {
+            None => None,
+            Some(Disk::Dark) => Some(Disk::Light),
+            Some(Disk::Light) => Some(Disk::Dark),
+        };
+        
         Board::set(board, position, new_state)
     }
 
@@ -234,8 +238,8 @@ impl Board {
                 Some(neighbor) => {
                     match Board::get(board, &neighbor) {
                         // Aww dang, we hit an empty space; abort!
-                        State::Empty => return None,
-                        State::Occupied(d) => {
+                        None => return None,
+                        Some(d) => {
                             // if our neighbor is in the same state as the player,
                             // it MIGHT mean we've been collecting flippable positions!
                             if d == player_disk {
@@ -264,7 +268,7 @@ impl Board {
         let mut playable_set = HashMap::new();
 
         // gather all of the empty, playable spaces
-        let empty_positions = Board::in_state(board, State::Empty);
+        let empty_positions = Board::in_state(board, None);
 
         // step through each empty position and determine if it is playable.
         for position in empty_positions {

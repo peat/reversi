@@ -1,27 +1,5 @@
 use crate::board::Board;
 use crate::direction::Direction;
-use crate::disk::Disk;
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum State {
-    Empty,
-    Occupied(Disk),
-}
-
-impl State {
-    pub fn opposite(b: State) -> Self {
-        match b {
-            State::Empty => State::Empty,
-            State::Occupied(d) => State::Occupied(d.opposite()),
-        }
-    }
-}
-
-impl Default for State {
-    fn default() -> Self {
-        State::Empty
-    }
-}
 
 #[derive(Clone, Copy, Debug, PartialEq, Hash, Eq)]
 pub struct Position {
