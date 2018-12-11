@@ -1,19 +1,14 @@
 use crate::board::Board;
 use crate::position::Position;
 
-pub enum Play {
-    Place(Position),
-    Pass,
-}
-
 pub struct Game {
     board: Board,
-    available_moves: Vec<Play>,
+    available_moves: Vec<Option<Position>>,
 }
 
 pub struct BreadthRecursion {
     board: Board,
-    available_moves: Vec<Play>,
+    available_moves: Vec<Option<Position>>,
 }
 
 impl BreadthRecursion {
@@ -33,8 +28,8 @@ impl Iterator for BreadthRecursion {
         match self.available_moves.pop() {
             None => None,
             Some(p) => match p {
-                Play::Pass => Some(Board::pass(&self.board)),
-                Play::Place(o) => Some(Board::play(&self.board, &o)),
+                None => Some(Board::pass(&self.board)),
+                Some(o) => Some(Board::play(&self.board, &o)),
             },
         }
     }
@@ -52,10 +47,10 @@ impl Game {
 
         let available_moves = match Board::valid_moves(board) {
             // if there are no available moves on the board, our only option is to pass.
-            None => vec![Play::Pass],
+            None => vec![None],
 
             // collect all of the available moves ...
-            Some(ps) => ps.iter().map(|p| Play::Place(*p)).collect(),
+            Some(ps) => ps.iter().map(|p| Some(*p)).collect(),
         };
 
         Game {
