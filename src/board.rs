@@ -79,18 +79,19 @@ impl Board {
 
         // on to the next turn!
         new_board.passed = false;
-        Board::next_turn(&new_board)
+        Board::next_turn(new_board)
     }
 
     pub fn pass(board: &Board) -> Self {
-        if Board::is_complete(board) {
-            return board.clone();
+        let mut new_board = board.clone();
+
+        if Board::is_complete(&new_board) {
+            return new_board;
         }
 
-        let mut new_board = board.clone();
         new_board.passed = true;
         new_board.transcript.push(Transcript::Pass);
-        Board::next_turn(&new_board)
+        Board::next_turn(new_board)
     }
 
     pub fn is_complete(board: &Board) -> bool {
@@ -203,18 +204,17 @@ impl Board {
         Board::set(board, position, new_state)
     }
 
-    fn next_turn(board: &Board) -> Board {
-        let mut new_board = board.clone();
-        new_board.turn = board.turn.opposite();
-        new_board.available_moves = Board::moves_for(&board, new_board.turn);
+    fn next_turn(mut board: Board) -> Board {
+        board.turn = board.turn.opposite();
+        board.available_moves = Board::moves_for(&board, board.turn);
         match Board::count(&board) {
             (d, l, e) => {
-                new_board.dark_count = d;
-                new_board.light_count = l;
-                new_board.empty_count = e;
+                board.dark_count = d;
+                board.light_count = l;
+                board.empty_count = e;
             }
         };
-        new_board
+        board
     }
 
     fn attempt_direction(

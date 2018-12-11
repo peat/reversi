@@ -71,7 +71,10 @@ fn main() {
     let partial_tv = Transcript::from_string(partial);
     let partial_board = Board::from_transcript(&partial_tv);
 
-    println!("There are {} open positions ... \n", board.empty_count);
+    println!(
+        "There are {} open positions ...\n",
+        partial_board.empty_count,
+    );
 
     partial_board.pp();
 
