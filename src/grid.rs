@@ -1,3 +1,5 @@
+use crate::analyzer::MoveIterator;
+use crate::disk::Disk;
 use crate::position::Position;
 
 pub const MAX_X: usize = 7;
@@ -20,14 +22,25 @@ impl State {
     }
 }
 
+impl From<Disk> for State {
+    fn from(disk: Disk) -> Self {
+        match disk {
+            Disk::Dark => State::Dark,
+            Disk::Light => State::Light,
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Grid {
+    pub turn: Disk,
     data: [[State; MAX_Y + 1]; MAX_X + 1],
 }
 
 impl Grid {
     pub fn new() -> Self {
         Grid {
+            turn: Disk::Dark,
             data: [[State::Empty; MAX_Y + 1]; MAX_X + 1],
         }
     }
@@ -49,15 +62,21 @@ impl Grid {
     pub fn iter(&self) -> GridIterator {
         GridIterator::new(self)
     }
+
+    pub fn moves(&self) -> MoveIterator {
+        MoveIterator::new(GridIterator::new(self))
+    }
 }
 
+#[derive(Debug)]
 pub struct GridIterator {
     index: usize,
-    grid: Grid,
+    pub grid: Grid,
 }
 
 impl GridIterator {
     pub fn new(grid: &Grid) -> Self {
+        // println!("NEW GRID ITERATOR");
         GridIterator {
             index: 0,
             grid: grid.clone(),
@@ -66,7 +85,7 @@ impl GridIterator {
 }
 
 impl Iterator for GridIterator {
-    type Item = (Position, State);
+    type Item = Position;
     fn next(&mut self) -> Option<Self::Item> {
         // check to see if our index is out of bounds.
         if self.index >= (MAX_X + 1) * (MAX_Y + 1) {
@@ -79,12 +98,11 @@ impl Iterator for GridIterator {
 
         // build the response.
         let position = Position { x, y };
-        let state = self.grid.get(x, y);
 
         // increment the index
         self.index += 1;
 
         // result!
-        Some((position, state))
+        Some(position)
     }
 }

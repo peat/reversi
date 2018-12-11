@@ -1,3 +1,4 @@
+mod analyzer;
 mod board;
 mod direction;
 mod disk;
@@ -6,15 +7,25 @@ mod grid;
 mod position;
 mod transcript;
 
+use crate::analyzer::{MoveIterator, ValidMove};
 use crate::board::Board;
 use crate::disk::Disk;
 use crate::game::Game;
-use crate::grid::{Grid, GridIterator};
+use crate::grid::{Grid, GridIterator, State};
 use crate::transcript::Transcript;
 
 use std::time::Instant;
 
 fn main() {
+    // let b = Board::default();
+    // let mut mi = b.grid.moves();
+
+    // for _ in 0..65 {
+    //     println!("{:?}", mi.next());
+    // }
+
+    // panic!();
+
     // play through an entire game, with random moves
     let mut timer = Instant::now();
     let board = generate_game();

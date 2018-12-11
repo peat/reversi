@@ -12,7 +12,7 @@ impl Position {
         Position { x, y }
     }
 
-    pub fn direction(&self, d: &Direction) -> Option<Self> {
+    pub fn neighbor(&self, d: &Direction) -> Option<Self> {
         match d {
             Direction::North => self.north(),
             Direction::NorthEast => self.north_east(),

@@ -1,45 +1,18 @@
-use crate::direction::Direction;
 use crate::disk::Disk;
 use crate::position::Position;
 use crate::transcript::Transcript;
-use crate::grid::{Grid, GridIterator, State, MAX_X, MAX_Y};
-
-#[derive(Clone, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
-struct ValidMove {
-    position: Position,
-    affected: Vec<Position>
-}
-
-struct MoveIterator {
-    grid_iterator: GridIterator
-}
-
-impl Iterator for MoveIterator {
-    type Item = ValidMove;
-    fn next(&mut self) -> Option<Self::Item> {
-        loop {
-            match self.grid_iterator.next() {
-                Some((position, State::Empty)) => {
-                ...
-                } 
-                None => return None,
-                _ => continue,
-            }
-        }
-        None
-    }
-}
+use crate::grid::{Grid, State, MAX_X, MAX_Y};
+use crate::analyzer::ValidMove;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub transcript: Vec<Transcript>, // the history of plays on this board
-    pub turn: Disk,                  // who is currently playing
     pub passed: bool,                // whether the last player passed
     pub light_count: usize,
     pub dark_count: usize,
     pub empty_count: usize,
     valid_moves: Vec<ValidMove>,    // the moves available to the current player
-    grid: Grid,
+    pub grid: Grid,
 }
 
 impl Default for Board {
@@ -48,7 +21,6 @@ impl Default for Board {
     fn default() -> Self {
         let mut b = Board {
             transcript: Vec::new(),
-            turn: Disk::Dark,
             passed: false,
             valid_moves: Vec::new(),
             light_count: 2,
@@ -64,7 +36,9 @@ impl Default for Board {
         b = Board::set(b, &Position::new(4, 4), Some(Disk::Light));
 
         // populate the opening available moves
-        b.valid_moves = Board::moves_for(&b, b.turn);
+        // println!("Collecting initial moves ...");
+        b.valid_moves = Board::moves_for(&b);
+        // println!("... DONE!!");
 
         b // clean board in starting position!
     }
@@ -92,7 +66,7 @@ impl Board {
         }
 
         // mark the position as owned by the current player
-        let occupied_by = Some(new_board.turn);
+        let occupied_by = Some(new_board.grid.turn);
         new_board = Board::set(new_board, &position, occupied_by);
 
         // record the move
@@ -219,18 +193,6 @@ impl Board {
         (dark_count, light_count, empty_count)
     }
 
-    fn in_state(board: &Board, state: State) -> Vec<Position> {
-        let mut output = Vec::new();
-        for y in 0..=MAX_Y {
-            for x in 0..=MAX_X {
-                if board.grid.get(x,y) == state {
-                    output.push(Position { x, y} );
-                }
-            }
-        }
-        output
-    }
-
     fn flips_for(board: &Board, position: &Position) -> Option<Vec<Position>> {
         for m in board.valid_moves.clone() {
             if m.position == *position {
@@ -246,8 +208,8 @@ impl Board {
     }
 
     fn next_turn(mut board: Board) -> Board {
-        board.turn = board.turn.opposite();
-        board.valid_moves = Board::moves_for(&board, board.turn);
+        board.grid.turn = board.grid.turn.opposite();
+        board.valid_moves = Board::moves_for(&board);
         match Board::count(&board) {
             (d, l, e) => {
                 board.dark_count = d;
@@ -258,80 +220,16 @@ impl Board {
         board
     }
 
-    fn attempt_direction(
-        board: &Board,
-        position: &Position,
-        player_disk: Disk,
-        direction: &Direction,
-    ) -> Option<Vec<Position>> {
-        let mut found_positions = Vec::new();
-
-        // placeholder while we're traversing the board
-        let mut current_position = *position;
-
+    fn moves_for(board: &Board) -> Vec<ValidMove> {
+        let mut valid_moves = Vec::new();
+        let mut vm_iterator = board.grid.moves();
         loop {
-            // see if we can load the next position in the given direction
-            match current_position.direction(direction) {
-                // whoops, hit an edge; nothing in this direction!
-                None => return None,
-
-                // ok, we found a neighbor. let's check it out ...
-                Some(neighbor) => {
-                    match Board::get(board, &neighbor) {
-                        // Aww dang, we hit an empty space; abort!
-                        None => return None,
-                        Some(d) => {
-                            // if our neighbor is in the same state as the player,
-                            // it MIGHT mean we've been collecting flippable positions!
-                            if d == player_disk {
-                                // if we've found flippable positions, return 'em, otherwise
-                                // return nothing.
-                                if found_positions.is_empty() {
-                                    return None;
-                                } else {
-                                    return Some(found_positions);
-                                }
-                            } else {
-                                // if our neighbor is in an opposing state, it it could be a flippable
-                                // position! Collect it, and step into the neighbor position.
-                                found_positions.push(neighbor);
-                                current_position = neighbor;
-                            }
-                        }
-                    }
-                }
+            match vm_iterator.next() {
+                Some(vm) => valid_moves.push(vm),
+                None => break,
             }
         }
-    }
-
-    fn moves_for(board: &Board, disk: Disk) -> Vec<ValidMove> {
-        // placeholder for our playable set
-        let mut playable_set = Vec::new();
-
-        // gather all of the empty, playable spaces
-        let empty_positions = Board::in_state(board, State::Empty);
-
-        // step through each empty position and determine if it is playable.
-        for position in empty_positions {
-            // we'll collect all of the positions that would be flipped by a play at the
-            // current position here
-            let mut affected = Vec::new();
-
-            // cycle through our cardinal directions
-            for direction in &Direction::ALL {
-                // if we find a play, collect the potentially affected positions
-                if let Some(a) = Board::attempt_direction(board, &position, disk, direction)
-                {
-                    affected.extend(a);
-                }
-            }
-
-            // done testing all of the directions; if we have anything, stash it and move on ...
-            if !affected.is_empty() {
-                let valid_move = ValidMove { position, affected };
-                playable_set.push(valid_move);
-            }
-        }
-        playable_set
+        // println!("EH? {:?}", valid_moves);
+        valid_moves
     }
 }
