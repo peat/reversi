@@ -9,6 +9,50 @@ struct ValidMove {
     affected: Vec<Position>
 }
 
+#[derive(Copy, Clone, Debug, PartialEq)]
+enum State {
+    Empty,
+    Dark,
+    Light,
+}
+
+impl State {
+    pub fn opposite(&self) -> State {
+        match self {
+            State::Empty => State::Empty,
+            State::Dark => State::Light,
+            State::Light => State::Dark,
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+struct Grid {
+    data: [[State; Board::MAX_Y + 1]; Board::MAX_X + 1],
+}
+
+impl Grid {
+    pub fn new() -> Self {
+        Grid {
+            data: [[State::Empty; Board::MAX_Y + 1]; Board::MAX_X + 1]
+        }
+    }
+
+    pub fn get(&self, x: usize, y: usize) -> State {
+        self.data[x][y]
+    }
+
+    pub fn set(&mut self, x: usize, y: usize, state: State) {
+        self.data[x][y] = state;
+    }
+
+    pub fn flip(&mut self, x: usize, y: usize) -> State {
+        let s = self.get(x, y).opposite();
+        self.set(x, y, s);
+        s
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
     pub transcript: Vec<Transcript>, // the history of plays on this board
@@ -18,7 +62,7 @@ pub struct Board {
     pub dark_count: usize,
     pub empty_count: usize,
     valid_moves: Vec<ValidMove>,    // the moves available to the current player
-    board: [[Option<Disk>; Board::MAX_Y + 1]; Board::MAX_X + 1],
+    grid: Grid,
 }
 
 impl Default for Board {
@@ -33,7 +77,7 @@ impl Default for Board {
             light_count: 2,
             dark_count: 2,
             empty_count: 60,
-            board: [[None; 8]; 8],
+            grid: Grid::new(),
         };
 
         // set up the opening positions
@@ -151,7 +195,7 @@ impl Board {
         for y in 0..8 {
             print!("{}", y + 1);
             for x in 0..8 {
-                match self.board[x][y] {
+                match Board::get(self, &Position { x, y }) {
                     None => print!(" •"),
                     Some(Disk::Dark) => print!(" D"),
                     Some(Disk::Light) => print!(" L"),
@@ -164,11 +208,21 @@ impl Board {
     // PRIVATE METHODS --------------------------------------------------------
 
     fn get(board: &Board, position: &Position) -> Option<Disk> {
-        board.board[position.x][position.y]
+        match board.grid.get( position.x, position.y ) {
+            State::Empty => None,
+            State::Dark => Some(Disk::Dark),
+            State::Light => Some(Disk::Light),
+        }
     }
 
     fn set(mut board: Board, position: &Position, state: Option<Disk>) -> Self {
-        board.board[position.x][position.y] = state;
+        let s = match state {
+            None => State::Empty,
+            Some(Disk::Dark) => State::Dark,
+            Some(Disk::Light) => State::Light,
+        };
+
+        board.grid.set( position.x, position.y, s);
         board
     }
 
@@ -179,12 +233,10 @@ impl Board {
 
         for y in 0..=Board::MAX_Y {
             for x in 0..=Board::MAX_X {
-                match board.board[x][y] {
-                    None => empty_count += 1,
-                    Some(d) => match d {
-                        Disk::Dark => dark_count += 1,
-                        Disk::Light => light_count += 1,
-                    }
+                match board.grid.get(x,y) {
+                    State::Empty => empty_count += 1,
+                    State::Dark => dark_count += 1,
+                    State::Light => light_count += 1,
                 }
             }
         }
@@ -192,11 +244,11 @@ impl Board {
         (dark_count, light_count, empty_count)
     }
 
-    fn in_state(board: &Board, state: Option<Disk>) -> Vec<Position> {
+    fn in_state(board: &Board, state: State) -> Vec<Position> {
         let mut output = Vec::new();
         for y in 0..=Board::MAX_Y {
             for x in 0..=Board::MAX_X {
-                if board.board[x][y] == state {
+                if board.grid.get(x,y) == state {
                     output.push(Position { x, y} );
                 }
             }
@@ -213,14 +265,9 @@ impl Board {
         None
     }
 
-    fn flip(board: Board, position: &Position) -> Self {
-        let new_state = match Board::get(&board, position) {
-            None => None,
-            Some(Disk::Dark) => Some(Disk::Light),
-            Some(Disk::Light) => Some(Disk::Dark),
-        };
-        
-        Board::set(board, position, new_state)
+    fn flip(mut board: Board, position: &Position) -> Self {
+        board.grid.flip(position.x, position.y);
+        board
     }
 
     fn next_turn(mut board: Board) -> Board {
@@ -287,7 +334,7 @@ impl Board {
         let mut playable_set = Vec::new();
 
         // gather all of the empty, playable spaces
-        let empty_positions = Board::in_state(board, None);
+        let empty_positions = Board::in_state(board, State::Empty);
 
         // step through each empty position and determine if it is playable.
         for position in empty_positions {
