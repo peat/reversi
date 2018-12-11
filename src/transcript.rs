@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::position::Position;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -8,8 +10,17 @@ pub enum Transcript {
     Pass,
 }
 
+impl fmt::Display for Transcript {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Transcript::Position(x, y) => write!(f, "{}{}", x, y),
+            Transcript::Pass => write!(f, "PP"),
+        }
+    }
+}
+
 impl Transcript {
-    pub fn from_string(source: &str) -> Vec<Transcript> {
+    pub fn from_string(source: &str) -> Vec<Self> {
         let mut output = Vec::new();
 
         let mut chars = source.chars();
@@ -23,7 +34,7 @@ impl Transcript {
         output
     }
 
-    pub fn from_chars(raw_x: char, raw_y: char) -> Transcript {
+    pub fn from_chars(raw_x: char, raw_y: char) -> Self {
         match raw_x.to_ascii_uppercase() {
             'P' => Transcript::Pass,
             x => match raw_y.to_digit(10) {
@@ -40,16 +51,9 @@ impl Transcript {
     pub fn stringify(transcripts: &[Transcript]) -> String {
         let mut output = String::new();
         for t in transcripts {
-            output.push_str(&t.format());
+            output.push_str(&format!("{}", t));
         }
         output
-    }
-
-    pub fn format(&self) -> String {
-        match self {
-            Transcript::Position(x, y) => format!("{}{}", x, y),
-            Transcript::Pass => "PP".to_string(),
-        }
     }
 
     pub fn to_position(&self) -> Option<Position> {
@@ -97,5 +101,24 @@ impl From<Position> for Transcript {
         }
 
         Transcript::Position(x, i.y + 1)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::board::Board;
+
+    #[test]
+    fn transcript_round_trip() {
+        let transcript_source = String::from("C4E3F4G5G4G3E2C3H6C5B4F3H5B3H3A5A4F2G2B5A6H2B6H1H4E1G1B7D1H7C6A7A2F1B8D3A8F5C2B2A3D6E7C1B1C7D8A1F6D2G6F8D7G7E6C8E8PPF7PPH8G8PP");
+        let transcript_vec = Transcript::from_string(&transcript_source);
+
+        // round trip to vector format
+        assert_eq!(transcript_source, Transcript::stringify(&transcript_vec));
+
+        // round trip to board
+        let tv_to_board = Board::from_transcript(&transcript_vec);
+        assert_eq!(transcript_vec, tv_to_board.transcript);
     }
 }
