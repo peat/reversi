@@ -2,6 +2,7 @@ mod board;
 mod direction;
 mod disk;
 mod game;
+mod grid;
 mod position;
 mod transcript;
 

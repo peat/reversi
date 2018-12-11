@@ -2,6 +2,7 @@ use crate::direction::Direction;
 use crate::disk::Disk;
 use crate::position::Position;
 use crate::transcript::Transcript;
+use crate::grid::{Grid, State};
 
 #[derive(Clone, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
 struct ValidMove {
@@ -9,49 +10,7 @@ struct ValidMove {
     affected: Vec<Position>
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum State {
-    Empty,
-    Dark,
-    Light,
-}
 
-impl State {
-    pub fn opposite(&self) -> State {
-        match self {
-            State::Empty => State::Empty,
-            State::Dark => State::Light,
-            State::Light => State::Dark,
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq)]
-struct Grid {
-    data: [[State; Board::MAX_Y + 1]; Board::MAX_X + 1],
-}
-
-impl Grid {
-    pub fn new() -> Self {
-        Grid {
-            data: [[State::Empty; Board::MAX_Y + 1]; Board::MAX_X + 1]
-        }
-    }
-
-    pub fn get(&self, x: usize, y: usize) -> State {
-        self.data[x][y]
-    }
-
-    pub fn set(&mut self, x: usize, y: usize, state: State) {
-        self.data[x][y] = state;
-    }
-
-    pub fn flip(&mut self, x: usize, y: usize) -> State {
-        let s = self.get(x, y).opposite();
-        self.set(x, y, s);
-        s
-    }
-}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Board {
