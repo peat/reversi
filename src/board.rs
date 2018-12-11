@@ -13,6 +13,9 @@ pub struct Board {
     pub turn: Disk,                  // who is currently playing
     pub passed: bool,                // whether the last player passed
     pub available_moves: MoveMap,    // the moves available to the current player
+    pub light_count: usize,
+    pub dark_count: usize,
+    pub empty_count: usize,
     board: [[State; Board::MAX_Y + 1]; Board::MAX_X + 1],
 }
 
@@ -25,6 +28,9 @@ impl Default for Board {
             turn: Disk::Dark,
             passed: false,
             available_moves: HashMap::new(),
+            light_count: 2,
+            dark_count: 2,
+            empty_count: 60,
             board: [[State::Empty; 8]; 8],
         };
 
@@ -88,22 +94,19 @@ impl Board {
     }
 
     pub fn is_complete(board: &Board) -> bool {
-        board.available_moves.is_empty() && board.passed
-    }
-
-    pub fn score(board: &Board, disk: Disk) -> usize {
-        Board::in_state(board, State::Occupied(disk)).len()
+        // there are no more Dark or Light disks on the board
+        ((board.light_count == 0) 
+            | (board.dark_count == 0))
+        // or no available moves, and the last person passed -- complete!
+        | (board.available_moves.is_empty() && board.passed)
     }
 
     pub fn winner(board: &Board) -> Option<Disk> {
-        let dark = Board::score(board, Disk::Dark);
-        let light = Board::score(board, Disk::Light);
-
-        if dark > light {
+        if board.dark_count > board.light_count {
             return Some(Disk::Dark);
         }
 
-        if light > dark {
+        if board.light_count > board.dark_count {
             return Some(Disk::Light);
         }
 
@@ -129,21 +132,6 @@ impl Board {
 
         b
     }
-
-    pub fn in_state(board: &Board, s: State) -> Vec<Position> {
-        let mut output = Vec::new();
-
-        for y in 0..=Board::MAX_Y {
-            for x in 0..=Board::MAX_X {
-                if board.board[x][y] == s {
-                    output.push(Position { x, y })
-                }
-            }
-        }
-
-        output
-    }
-
 
     // INSPECTION METHODS -----------------------------------------------------
 
@@ -173,6 +161,38 @@ impl Board {
         board
     }
 
+    fn count(board: &Board) -> (usize, usize, usize) {
+        let mut dark_count = 0;
+        let mut light_count = 0;
+        let mut empty_count = 0;
+
+        for y in 0..=Board::MAX_Y {
+            for x in 0..=Board::MAX_X {
+                match board.board[x][y] {
+                    State::Empty => empty_count += 1,
+                    State::Occupied(d) => match d {
+                        Disk::Dark => dark_count += 1,
+                        Disk::Light => light_count += 1,
+                    }
+                }
+            }
+        }
+
+        (dark_count, light_count, empty_count)
+    }
+
+    fn in_state(board: &Board, state: State) -> Vec<Position> {
+        let mut output = Vec::new();
+        for y in 0..=Board::MAX_Y {
+            for x in 0..=Board::MAX_X {
+                if board.board[x][y] == state {
+                    output.push(Position { x, y} );
+                }
+            }
+        }
+        output
+    }
+
     fn flip(board: Board, position: &Position) -> Self {
         let old_state = Board::get(&board, position);
         let new_state = State::opposite(old_state);
@@ -183,6 +203,13 @@ impl Board {
         let mut new_board = board.clone();
         new_board.turn = board.turn.opposite();
         new_board.available_moves = Board::moves_for(&board, new_board.turn);
+        match Board::count(&board) {
+            (d, l, e) => {
+                new_board.dark_count = d;
+                new_board.light_count = l;
+                new_board.empty_count = e;
+            }
+        };
         new_board
     }
 
@@ -259,7 +286,6 @@ impl Board {
                 playable_set.insert(position, affected_positions);
             }
         }
-
         playable_set
     }
 }
