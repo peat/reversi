@@ -2,6 +2,9 @@ use std::fmt;
 
 use crate::position::Position;
 
+pub const MANUBU_MARUO: &str = "E6F4E3F6G5D6E7F5C5";
+pub const DEPTH_FIRST: &str = "D3C3B3B2B1A1C4C1C2D2D1E1A2A3F5E2F1G1PPF2PPE3PPB5B4A5A4C5A6F4F3G3G2H2H1H3H4G4C6G5H5B6C7D6E6F6G6H6H7A7PPB7A8D7E7F7G7G8B8C8D8E8F8H8";
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Transcript {
     // starts a (A, 1) and goes to (H, 8)
@@ -107,7 +110,7 @@ impl From<Position> for Transcript {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::Board;
+    use crate::game::Game;
 
     #[test]
     fn transcript_round_trip() {
@@ -117,8 +120,8 @@ mod tests {
         // round trip to vector format
         assert_eq!(transcript_source, Transcript::stringify(&transcript_vec));
 
-        // round trip to board
-        let tv_to_board = Board::from_transcript(&transcript_vec);
-        assert_eq!(transcript_vec, tv_to_board.transcript);
+        // round trip to game
+        let tv_to_game = Game::from_transcript(&transcript_vec);
+        assert_eq!(transcript_vec, tv_to_game.transcript);
     }
 }

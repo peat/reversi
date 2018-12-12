@@ -1,5 +1,32 @@
+use crate::board::{MAX_X, MAX_Y};
 use crate::direction::Direction;
-use crate::grid::{MAX_X, MAX_Y};
+use crate::disk::Disk;
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum PositionState {
+    Empty,
+    Dark,
+    Light,
+}
+
+impl PositionState {
+    pub fn opposite(self) -> Self {
+        match self {
+            PositionState::Empty => PositionState::Empty,
+            PositionState::Dark => PositionState::Light,
+            PositionState::Light => PositionState::Dark,
+        }
+    }
+}
+
+impl From<Disk> for PositionState {
+    fn from(disk: Disk) -> Self {
+        match disk {
+            Disk::Dark => PositionState::Dark,
+            Disk::Light => PositionState::Light,
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, Ord, PartialOrd, Hash, Eq, PartialEq)]
 pub struct Position {
@@ -8,10 +35,6 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn new(x: usize, y: usize) -> Self {
-        Position { x, y }
-    }
-
     pub fn neighbor(&self, d: &Direction) -> Option<Self> {
         match d {
             Direction::North => self.north(),
@@ -84,4 +107,56 @@ impl Position {
     fn south_west(&self) -> Option<Self> {
         self.south()?.west()
     }
+}
+
+#[derive(Debug)]
+pub struct PositionIter {
+    index: usize,
+}
+
+impl PositionIter {
+    pub fn new() -> Self {
+        PositionIter { index: 0 }
+    }
+}
+
+impl Iterator for PositionIter {
+    type Item = Position;
+    fn next(&mut self) -> Option<Self::Item> {
+        // check to see if our index is out of bounds.
+        if self.index >= (MAX_X + 1) * (MAX_Y + 1) {
+            return None;
+        }
+
+        // convert index into X and Y coordinates.
+        let x = self.index % (MAX_X + 1);
+        let y = self.index / (MAX_Y + 1);
+
+        // build the response.
+        let position = Position { x, y };
+
+        // increment the index
+        self.index += 1;
+
+        // result!
+        Some(position)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn position_iterator() {
+        let mut p = PositionIter::new();
+        assert_eq!(p.next(), Some(Position { x: 0, y: 0 }));
+        assert_eq!(p.last(), Some(Position { x: 7, y: 7 }));
+
+        p = PositionIter::new();
+        assert_eq!(p.nth(63), Some(Position { x: 7, y: 7 }));
+        assert_eq!(p.next(), None);
+        assert_eq!(p.nth(200), None);
+    }
+
 }

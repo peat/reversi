@@ -23,3 +23,25 @@ impl fmt::Display for Disk {
         }
     }
 }
+
+pub struct DiskIter {
+    index: usize,
+}
+
+impl DiskIter {
+    pub fn new() -> Self {
+        Self { index: 0 }
+    }
+}
+
+impl Iterator for DiskIter {
+    type Item = Disk;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.index += 1;
+        match self.index {
+            0 => Some(Disk::Dark),
+            1 => Some(Disk::Light),
+            _ => None,
+        }
+    }
+}
