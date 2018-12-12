@@ -140,8 +140,12 @@ impl Game {
         (dark_score, light_score)
     }
 
-    pub fn valid_moves(&self) -> ValidMoveIterator {
+    pub fn move_iter(&self) -> ValidMoveIterator {
         ValidMoveIterator::new(self.board, self.turn)
+    }
+
+    pub fn valid_moves(&self) -> Vec<ValidMove> {
+        self.move_iter().map(|m| m.clone()).collect()
     }
 
     pub fn pp(&self) {
@@ -253,6 +257,13 @@ mod tests {
         assert!(result.is_some());
         result = Game::validate_move(&g.board, &p, Disk::Light);
         assert!(result.is_none());
+    }
+
+    #[test]
+    fn vmi_finds_all_moves() {
+        let g = Game::new();
+
+        assert_eq!(g.valid_moves().len(), 4);
     }
 
     #[test]

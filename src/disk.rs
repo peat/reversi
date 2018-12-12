@@ -37,11 +37,12 @@ impl DiskIter {
 impl Iterator for DiskIter {
     type Item = Disk;
     fn next(&mut self) -> Option<Self::Item> {
-        self.index += 1;
-        match self.index {
+        let result = match self.index {
             0 => Some(Disk::Dark),
             1 => Some(Disk::Light),
             _ => None,
-        }
+        };
+        self.index += 1;
+        result
     }
 }
