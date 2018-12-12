@@ -1,32 +1,25 @@
 use crate::game::{Game, ValidMoveIterator};
 
-pub struct DepthFirst {
-    history: Vec<Game>,
+pub struct ResolveFirst {
     game: Game,
     move_iter: ValidMoveIterator,
 }
 
-impl DepthFirst {
+impl ResolveFirst {
     fn update(&mut self, new_game: &Game) {
-        self.history.push(self.game.clone());
         self.game = new_game.clone();
         self.move_iter = new_game.valid_moves();
     }
 }
 
-impl From<Game> for DepthFirst {
+impl From<Game> for ResolveFirst {
     fn from(game: Game) -> Self {
-        let history = Vec::new();
         let move_iter = game.valid_moves();
-        DepthFirst {
-            history,
-            game,
-            move_iter,
-        }
+        Self { game, move_iter }
     }
 }
 
-impl Iterator for DepthFirst {
+impl Iterator for ResolveFirst {
     type Item = Game;
     fn next(&mut self) -> Option<Self::Item> {
         match self.move_iter.next() {

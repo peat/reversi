@@ -7,7 +7,7 @@ mod solvers;
 mod transcript;
 
 use crate::game::Game;
-use crate::solvers::DepthFirst;
+use crate::solvers::ResolveFirst;
 use crate::transcript::{Transcript, DEPTH_FIRST, MANUBU_MARUO};
 
 use std::time::Instant;
@@ -40,18 +40,18 @@ fn main() {
 
     println!("\n------------\n");
 
-    println!("Simple depth first solver ...\n");
+    println!("Simplest resolver, plays the first possible moves to completion ...\n");
 
     // play through an entire game, with random moves
     timer = Instant::now();
 
     let game = Game::new();
 
-    let dfi: DepthFirst = game.into();
+    let rfi: ResolveFirst = game.into();
 
-    let finished_dfg = dfi.last().unwrap();
+    let finished_rfi = rfi.last().unwrap();
 
-    finished_dfg.pp();
+    finished_rfi.pp();
 
     println!("Generated in {:?}", timer.elapsed());
 
