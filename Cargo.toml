@@ -5,3 +5,4 @@ authors = ["Peat Bakke <peat@peat.org>"]
 edition = "2018"
 
 [dependencies]
+rand = "0.6"
