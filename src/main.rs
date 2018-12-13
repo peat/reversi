@@ -12,9 +12,69 @@ use crate::game::Game;
 use crate::solvers::{DepthFirstIterator, NodeBuilder};
 use crate::transcript::{Transcript, MANUBU_MARUO};
 
+use std::env;
 use std::time::Instant;
 
 fn main() {
+    match env::args().last() {
+        None => help(),
+        Some(raw_mode) => match raw_mode.to_ascii_lowercase().trim() {
+            "demos" => demos(),
+            "generate_left" => generate_left(),
+            "generate_random" => generate_random(),
+            "generate_right" => generate_right(),
+            _ => help(),
+        },
+    }
+}
+
+fn help() {
+    println!("usage: reversi [option]");
+    println!();
+    println!("Available options:");
+    println!();
+    println!("  demos            Spits out a series of demos and benchmarking info.");
+    println!("  generate_left    Generates game transcripts with the 'left' tree solver.");
+    println!("  generate_random  Generates game transcripts with the 'random' tree solver.");
+    println!("  generate_right   Generates game transcripts with the 'right' tree solver.");
+    println!("  help             This screen.");
+    println!();
+}
+
+fn generate_left() {
+    let game = Game::new();
+    let mut s = DepthFirstIterator::new(NodeBuilder::left, &game);
+    loop {
+        match s.next() {
+            None => return,
+            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+        }
+    }
+}
+
+fn generate_right() {
+    let game = Game::new();
+    let mut s = DepthFirstIterator::new(NodeBuilder::right, &game);
+    loop {
+        match s.next() {
+            None => return,
+            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+        }
+    }
+}
+
+fn generate_random() {
+    let game = Game::new();
+    loop {
+        let mut s = DepthFirstIterator::new(NodeBuilder::random, &game);
+        match s.next() {
+            None => return,
+            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+        }
+    }
+}
+
+fn demos() {
     println!("\nDemos!");
 
     println!("\n------------\n");
