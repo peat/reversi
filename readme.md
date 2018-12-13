@@ -7,7 +7,7 @@ It does _not_ have an interactive playing mode!
 Currently supports:
 
 - Iterating game generators that can create finished games at ~15 microseconds each.
-- Left and right depth-first traversal, and random generators.
+- Left and right depth-first traversal, and non-repeating random generators.
 - Importing and exporting game transcripts at any stage of a game.
 
 Take a look at `src/main.rs` for the different examples of how it works.
