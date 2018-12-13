@@ -96,3 +96,22 @@ impl Iterator for DepthFirstIterator {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::transcript::Transcript;
+
+    #[test]
+    fn verify_left_depth_first_iterator() {
+        let expected_transcript = "D3C3B3B2B1A1C4C1C2D2D1E1A2A3F5E2F1G1PPF2PPE3PPB5B4A5A4C5A6F4F3G3G2H2H1H3H4G4C6G5H5B6C7D6E6F6G6H6H7A7PPB7A8D7E7F7G7G8B8C8D8E8F8H8";
+        let mut depth_first_iterator = DepthFirstIterator::new(NodeBuilder::left, &Game::new());
+        let first_result = depth_first_iterator.next().unwrap();
+
+        assert_eq!(
+            Transcript::from_string(expected_transcript),
+            first_result.transcript
+        );
+    }
+
+}

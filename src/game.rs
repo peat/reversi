@@ -234,7 +234,7 @@ impl Game {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::transcript::{DEPTH_FIRST, MANUBU_MARUO};
+    use crate::transcript::MANUBU_MARUO;
     use std::mem;
 
     #[test]
@@ -296,7 +296,7 @@ mod tests {
 
     #[test]
     fn mem_size() {
-        let g = Game::from_transcript(&Transcript::from_string(DEPTH_FIRST));
+        let g = Game::from_transcript(&Transcript::from_string(MANUBU_MARUO));
         println!("Game mem size: {}", mem::size_of_val(&g));
     }
 
