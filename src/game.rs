@@ -149,11 +149,17 @@ impl Game {
     }
 
     pub fn pp(&self) {
+        let (dark_score, light_score) = self.score();
+        let next_turn = if self.is_complete() {
+            "Complete".to_string()
+        } else {
+            format!("{}", self.turn)
+        };
+
         println!("{}", self.board.to_string());
         println!("Transcript: {}", Transcript::stringify(&self.transcript));
-        let (dark_score, light_score) = self.score();
         println!("Score: Dark {}, Light {}", dark_score, light_score);
-        println!("Next turn: {}", self.turn);
+        println!("Next turn: {}", next_turn);
     }
 
     fn end_turn(mut game: Game) -> Self {
