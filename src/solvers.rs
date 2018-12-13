@@ -1,5 +1,6 @@
 use crate::game::{Game, ValidMove};
-use rand::{thread_rng, Rng};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 pub struct NodeBuilder {}
 
@@ -20,7 +21,7 @@ impl NodeBuilder {
     pub fn random(g: &Game) -> Node {
         let game = g.clone();
         let mut valid_moves = g.valid_moves();
-        thread_rng().shuffle(&mut valid_moves);
+        valid_moves.shuffle(&mut thread_rng());
         Node { game, valid_moves }
     }
 }
@@ -38,9 +39,11 @@ pub struct DepthFirstIterator {
 impl DepthFirstIterator {
     pub fn new(node_builder: fn(&Game) -> Node, game: &Game) -> Self {
         let root = node_builder(game);
+        let index = vec![root];
+
         DepthFirstIterator {
-            node_builder: node_builder,
-            index: vec![root],
+            node_builder,
+            index,
         }
     }
 
