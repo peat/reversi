@@ -7,6 +7,7 @@ mod solvers;
 mod transcript;
 
 extern crate rand;
+extern crate rayon;
 
 use crate::game::Game;
 use crate::solvers::{DepthFirstIterator, NodeBuilder};
@@ -35,7 +36,7 @@ fn help() {
     println!();
     println!("  demos            Spits out a series of demos and benchmarking info.");
     println!("  generate_left    Generates game transcripts with the 'left' tree solver.");
-    println!("  generate_random  Generates game transcripts with the 'random' tree solver.");
+    println!("  generate_random  Generates game transcripts with the 'random' solver.");
     println!("  generate_right   Generates game transcripts with the 'right' tree solver.");
     println!("  help             This screen.");
     println!();
