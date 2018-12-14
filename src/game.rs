@@ -167,6 +167,13 @@ impl Game {
         game
     }
 
+    pub fn to_rotated(&self) -> Self {
+        let mut new_game = self.clone();
+        new_game.board = new_game.board.to_rotated();
+        new_game.transcript = new_game.transcript.iter().map(|t| t.to_rotated()).collect();
+        new_game
+    }
+
     // Determines whether a given position can be played, and what it's effect will be.
     fn validate_move(board: &Board, position: &Position, disk: Disk) -> Option<ValidMove> {
         // println!("validate_move {:?} for {}", position, disk);

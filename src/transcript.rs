@@ -82,6 +82,13 @@ impl Transcript {
             }
         }
     }
+
+    pub fn to_rotated(&self) -> Self {
+        match self.to_position() {
+            None => Transcript::Pass,
+            Some(p) => Transcript::from(p.to_rotated()),
+        }
+    }
 }
 
 impl From<Position> for Transcript {

@@ -107,6 +107,14 @@ impl Position {
     fn south_west(&self) -> Option<Self> {
         self.south()?.west()
     }
+
+    // the board can be rotated 180 degrees and be an identical game
+    pub fn to_rotated(&self) -> Self {
+        Self {
+            x: MAX_X - self.x,
+            y: MAX_Y - self.y,
+        }
+    }
 }
 
 #[derive(Debug)]

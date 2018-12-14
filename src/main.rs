@@ -35,7 +35,8 @@ fn help() {
     println!("Available options:");
     println!();
     println!("  demos            Spits out a series of demos and benchmarking info.");
-    println!("  incremental      Generates transcripts from a depth-first tree.");
+    println!("  incremental      Generates non-repeating transcripts.");
+    println!("  random           Generates random transcripts.");
     println!("  help             This screen.");
     println!();
 }
@@ -46,7 +47,10 @@ fn incremental() {
     loop {
         match s.next() {
             None => return,
-            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+            Some(result) => {
+                println!("{}", Transcript::stringify(&result.transcript));
+                println!("{}", Transcript::stringify(&result.to_rotated().transcript));
+            }
         }
     }
 }
