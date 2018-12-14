@@ -1,4 +1,5 @@
 mod board;
+mod contest;
 mod direction;
 mod disk;
 mod game;
@@ -9,6 +10,7 @@ mod transcript;
 extern crate rand;
 extern crate sha2;
 
+use crate::contest::{Contest, Player};
 use crate::game::Game;
 use crate::solvers::incremental::Incremental;
 use crate::solvers::random::{Random, Seed};
@@ -113,7 +115,7 @@ fn demos() {
 
     println!("\n------------\n");
 
-    let loops = 10_000;
+    let loops = 1_000;
 
     println!(
         "Benchmark the depth first solver and transcripts ({} games)...\n",
@@ -146,5 +148,17 @@ fn demos() {
 
     println!("\n------------\n");
 
-    println!("TBD: Breadth first solver\n");
+    println!("Playing through a basic contest (first moves) ...\n ");
+
+    println!("Result:");
+    let mut contest = Contest::new(Game::new(), Player::new(), Player::new());
+
+    timer = Instant::now();
+    contest.play();
+    elapsed = timer.elapsed();
+
+    contest.game.pp();
+    println!("Elapsed: {:?}", elapsed);
+
+    println!();
 }

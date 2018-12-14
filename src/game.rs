@@ -52,7 +52,7 @@ impl Iterator for ValidMoveIterator {
 #[derive(Clone)]
 pub struct Game {
     pub transcript: Vec<Transcript>,
-    turn: Disk,
+    pub turn: Disk,
     board: Board,
 }
 
