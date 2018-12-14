@@ -10,7 +10,7 @@ extern crate rand;
 extern crate rayon;
 
 use crate::game::Game;
-use crate::solvers::{DepthFirstIterator, NodeBuilder};
+use crate::solvers::incremental::Incremental;
 use crate::transcript::{Transcript, MANUBU_MARUO};
 
 use std::env;
@@ -21,9 +21,7 @@ fn main() {
         None => help(),
         Some(raw_mode) => match raw_mode.to_ascii_lowercase().trim() {
             "demos" => demos(),
-            "generate_left" => generate_left(),
-            "generate_random" => generate_random(),
-            "generate_right" => generate_right(),
+            "incremental" => incremental(),
             _ => help(),
         },
     }
@@ -35,39 +33,15 @@ fn help() {
     println!("Available options:");
     println!();
     println!("  demos            Spits out a series of demos and benchmarking info.");
-    println!("  generate_left    Generates game transcripts with the 'left' tree solver.");
-    println!("  generate_random  Generates game transcripts with the 'random' solver.");
-    println!("  generate_right   Generates game transcripts with the 'right' tree solver.");
+    println!("  incremental      Generates transcripts from a depth-first tree.");
     println!("  help             This screen.");
     println!();
 }
 
-fn generate_left() {
+fn incremental() {
     let game = Game::new();
-    let mut s = DepthFirstIterator::new(NodeBuilder::left, &game);
+    let mut s = Incremental::new(&game);
     loop {
-        match s.next() {
-            None => return,
-            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
-        }
-    }
-}
-
-fn generate_right() {
-    let game = Game::new();
-    let mut s = DepthFirstIterator::new(NodeBuilder::right, &game);
-    loop {
-        match s.next() {
-            None => return,
-            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
-        }
-    }
-}
-
-fn generate_random() {
-    let game = Game::new();
-    loop {
-        let mut s = DepthFirstIterator::new(NodeBuilder::random, &game);
         match s.next() {
             None => return,
             Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
@@ -91,23 +65,12 @@ fn demos() {
     println!("\n------------\n");
 
     let game = Game::new();
-    let mut s = DepthFirstIterator::new(NodeBuilder::left, &game);
+    let mut s = Incremental::new(&game);
     let first_left = s.next().unwrap();
-    s = DepthFirstIterator::new(NodeBuilder::right, &game);
-    let first_right = s.next().unwrap();
-    s = DepthFirstIterator::new(NodeBuilder::random, &game);
-    let first_random = s.next().unwrap();
 
-    println!("Generating left, right, and random completed games ...");
+    println!("Generating the first incremental completed game ...");
 
-    println!("\nLeft:");
     first_left.pp();
-
-    println!("\nRight:");
-    first_right.pp();
-
-    println!("\nRandom:");
-    first_random.pp();
 
     println!("\n------------\n");
 
@@ -119,7 +82,7 @@ fn demos() {
     );
 
     let game = Game::new();
-    let mut dfs = DepthFirstIterator::new(NodeBuilder::left, &game);
+    let mut dfs = Incremental::new(&game);
     let mut transcripts = Vec::new();
 
     let mut timer = Instant::now();
