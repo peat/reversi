@@ -7,10 +7,11 @@ mod solvers;
 mod transcript;
 
 extern crate rand;
-extern crate rayon;
+extern crate sha2;
 
 use crate::game::Game;
 use crate::solvers::incremental::Incremental;
+use crate::solvers::random::{Random, Seed};
 use crate::transcript::{Transcript, MANUBU_MARUO};
 
 use std::env;
@@ -22,6 +23,7 @@ fn main() {
         Some(raw_mode) => match raw_mode.to_ascii_lowercase().trim() {
             "demos" => demos(),
             "incremental" => incremental(),
+            "random" => random(),
             _ => help(),
         },
     }
@@ -41,6 +43,22 @@ fn help() {
 fn incremental() {
     let game = Game::new();
     let mut s = Incremental::new(&game);
+    loop {
+        match s.next() {
+            None => return,
+            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+        }
+    }
+}
+
+fn random() {
+    let game = Game::new();
+    let seed = Seed::new();
+    eprintln!(
+        "Generating random games from seed \"{}\"",
+        seed.string.clone()
+    );
+    let mut s = Random::new(game, seed);
     loop {
         match s.next() {
             None => return,
