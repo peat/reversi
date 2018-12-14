@@ -47,10 +47,7 @@ fn incremental() {
     loop {
         match s.next() {
             None => return,
-            Some(result) => {
-                println!("{}", Transcript::stringify(&result.transcript));
-                println!("{}", Transcript::stringify(&result.to_rotated().transcript));
-            }
+            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
         }
     }
 }
@@ -86,13 +83,33 @@ fn demos() {
 
     println!("\n------------\n");
 
-    let game = Game::new();
-    let mut s = Incremental::new(&game);
-    let first_left = s.next().unwrap();
-
     println!("Generating the first incremental completed game ...");
 
-    first_left.pp();
+    let mut timer = Instant::now();
+    let mut game = Game::new();
+    let mut iterator = Incremental::new(&game);
+    game = iterator.next().unwrap();
+    let mut elapsed = timer.elapsed();
+
+    game.pp();
+    println!("Elapsed: {:?}", elapsed);
+
+    println!("\nAnd second incremental completed game ...");
+
+    timer = Instant::now();
+    game = iterator.next().unwrap();
+    elapsed = timer.elapsed();
+
+    game.pp();
+    println!("Elapsed: {:?}", elapsed);
+
+    println!("\nAnd rotate it (identical solution) ...");
+    timer = Instant::now();
+    let rotated = game.to_rotated();
+    elapsed = timer.elapsed();
+
+    rotated.pp();
+    println!("Elapsed: {:?}", elapsed);
 
     println!("\n------------\n");
 
@@ -103,11 +120,11 @@ fn demos() {
         loops
     );
 
-    let game = Game::new();
+    game = Game::new();
     let mut dfs = Incremental::new(&game);
     let mut transcripts = Vec::new();
 
-    let mut timer = Instant::now();
+    timer = Instant::now();
 
     for _ in 0..loops {
         let g = dfs.next().unwrap();

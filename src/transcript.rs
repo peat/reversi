@@ -6,16 +6,18 @@ pub const MANUBU_MARUO: &str = "E6F4E3F6G5D6E7F5C5";
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Transcript {
-    // starts a (A, 1) and goes to (H, 8)
-    Position(char, usize),
-    // indicates the player passed
+    Play(Position),
     Pass,
 }
 
 impl fmt::Display for Transcript {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Transcript::Position(x, y) => write!(f, "{}{}", x, y),
+            Transcript::Play(p) => {
+                let x_char = Transcript::x_to_char(p.x);
+                let y_out = p.y + 1;
+                write!(f, "{}{}", x_char, y_out)
+            }
             Transcript::Pass => write!(f, "PP"),
         }
     }
@@ -29,7 +31,8 @@ impl Transcript {
 
         while let Some(raw_x) = chars.next() {
             if let Some(raw_y) = chars.next() {
-                output.push(Transcript::from_chars(raw_x, raw_y))
+                let t = Transcript::from_chars(raw_x, raw_y);
+                output.push(t)
             }
         }
 
@@ -37,17 +40,15 @@ impl Transcript {
     }
 
     pub fn from_chars(raw_x: char, raw_y: char) -> Self {
-        match raw_x.to_ascii_uppercase() {
-            'P' => Transcript::Pass,
-            x => match raw_y.to_digit(10) {
-                // base 10
-                None => panic!(
-                    "Error converting x {:?} y {:?} to Transcript.",
-                    raw_x, raw_y
-                ),
-                Some(y) => Transcript::Position(x, y as usize),
-            },
-        }
+        let x = match raw_x.to_ascii_uppercase() {
+            'P' => return Transcript::Pass,
+            c => Transcript::char_to_x(c),
+        };
+
+        let y = Transcript::char_to_y(raw_y);
+
+        let position = Position { x, y };
+        Transcript::Play(position)
     }
 
     pub fn stringify(transcripts: &[Transcript]) -> String {
@@ -61,25 +62,7 @@ impl Transcript {
     pub fn to_position(&self) -> Option<Position> {
         match self {
             Transcript::Pass => None,
-            Transcript::Position(x, y) => {
-                let px = match x {
-                    'A' => 0,
-                    'B' => 1,
-                    'C' => 2,
-                    'D' => 3,
-                    'E' => 4,
-                    'F' => 5,
-                    'G' => 6,
-                    'H' => 7,
-                    _ => return None,
-                };
-
-                if *y < 1 || *y > 8 {
-                    return None;
-                };
-
-                Some(Position { x: px, y: y - 1 })
-            }
+            Transcript::Play(p) => Some(*p),
         }
     }
 
@@ -89,11 +72,30 @@ impl Transcript {
             Some(p) => Transcript::from(p.to_rotated()),
         }
     }
-}
 
-impl From<Position> for Transcript {
-    fn from(i: Position) -> Self {
-        let x = match i.x {
+    fn char_to_x(c: char) -> usize {
+        match c {
+            'A' => 0,
+            'B' => 1,
+            'C' => 2,
+            'D' => 3,
+            'E' => 4,
+            'F' => 5,
+            'G' => 6,
+            'H' => 7,
+            _ => panic!("Invalid X {}; must be A..H", c),
+        }
+    }
+
+    fn char_to_y(c: char) -> usize {
+        match c.to_digit(10) {
+            None => panic!("Invalid Y {}; must be 1..8", c),
+            Some(y) => (y - 1) as usize,
+        }
+    }
+
+    fn x_to_char(x: usize) -> char {
+        match x {
             0 => 'A',
             1 => 'B',
             2 => 'C',
@@ -102,14 +104,14 @@ impl From<Position> for Transcript {
             5 => 'F',
             6 => 'G',
             7 => 'H',
-            _ => panic!("X value out of bounds in: {:?}", i),
-        };
-
-        if i.y > 7 {
-            panic!("Y value out of bounds in: {:?}", i)
+            _ => panic!("Invalid X {}; must be 0..7", x),
         }
+    }
+}
 
-        Transcript::Position(x, i.y + 1)
+impl From<Position> for Transcript {
+    fn from(p: Position) -> Self {
+        Transcript::Play(p)
     }
 }
 
