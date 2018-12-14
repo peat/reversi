@@ -78,20 +78,23 @@ fn demos() {
     // Manubo Maruo's famous nine move game; shortest Othello victory possible
     println!("Replaying Manubu Maruo's 9 move win ...\n");
 
+    let mut timer = Instant::now();
     let mm_transcript_vec = Transcript::from_string(MANUBU_MARUO);
     let mm_game = Game::from_transcript(&mm_transcript_vec);
+    let mut elapsed = timer.elapsed();
 
     mm_game.pp();
+    println!("Elapsed: {:?}", elapsed);
 
     println!("\n------------\n");
 
     println!("Generating the first incremental completed game ...");
 
-    let mut timer = Instant::now();
+    timer = Instant::now();
     let mut game = Game::new();
     let mut iterator = Incremental::new(&game);
     game = iterator.next().unwrap();
-    let mut elapsed = timer.elapsed();
+    elapsed = timer.elapsed();
 
     game.pp();
     println!("Elapsed: {:?}", elapsed);
