@@ -49,7 +49,13 @@ fn incremental() {
     loop {
         match s.next() {
             None => return,
-            Some(result) => println!("{}", Transcript::stringify(&result.transcript)),
+            Some(result) => {
+                println!("{}", Transcript::stringify(&result.transcript));
+                let symmetrical = Transcript::symmetrical(result.transcript);
+                for s in symmetrical {
+                    println!("{}", Transcript::stringify(&s));
+                }
+            }
         }
     }
 }
@@ -80,7 +86,7 @@ fn demos() {
 
     let mut timer = Instant::now();
     let mm_transcript_vec = Transcript::from_string(MANUBU_MARUO);
-    let mm_game = Game::from_transcript(&mm_transcript_vec);
+    let mm_game = Game::from_transcript(mm_transcript_vec);
     let mut elapsed = timer.elapsed();
 
     mm_game.pp();
@@ -108,13 +114,16 @@ fn demos() {
     game.pp();
     println!("Elapsed: {:?}", elapsed);
 
-    println!("\nAnd rotate it (identical solution) ...");
+    println!("\nAnd symmetrical transcripts (three more identical solutions) ...");
     timer = Instant::now();
-    let rotated = game.to_rotated();
+    let symmetrical = Transcript::symmetrical(game.transcript);
     elapsed = timer.elapsed();
+    println!("Elapsed: {:?}\n", elapsed);
 
-    rotated.pp();
-    println!("Elapsed: {:?}", elapsed);
+    for s in symmetrical {
+        let g = Game::from_transcript(s);
+        g.pp();
+    }
 
     println!("\n------------\n");
 
@@ -144,7 +153,7 @@ fn demos() {
     timer = Instant::now();
     for t in transcripts {
         let transcript_vec = Transcript::from_string(&t);
-        loop_results.push(Game::from_transcript(&transcript_vec))
+        loop_results.push(Game::from_transcript(transcript_vec))
     }
 
     println!("  Replayed from transcripts in {:?}", timer.elapsed());

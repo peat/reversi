@@ -72,13 +72,13 @@ impl Game {
         }
     }
 
-    pub fn from_transcript(transcript: &[Transcript]) -> Self {
+    pub fn from_transcript(transcript: Vec<Transcript>) -> Self {
         let mut game = Game::new();
 
         for t in transcript {
-            game = match t.to_position() {
-                None => game.pass(),
-                Some(position) => {
+            game = match t {
+                Transcript::Pass => game.pass(),
+                Transcript::Play(position) => {
                     if let Some(valid_move) = Game::validate_move(&game.board, &position, game.turn)
                     {
                         game.play(valid_move)
@@ -165,13 +165,6 @@ impl Game {
     fn end_turn(mut game: Game) -> Self {
         game.turn = game.turn.opposite();
         game
-    }
-
-    pub fn to_rotated(&self) -> Self {
-        let mut new_game = self.clone();
-        new_game.board = new_game.board.to_rotated();
-        new_game.transcript = new_game.transcript.iter().map(|t| t.to_rotated()).collect();
-        new_game
     }
 
     // Determines whether a given position can be played, and what it's effect will be.
@@ -284,7 +277,7 @@ mod tests {
         let mut g = Game::new();
         assert_eq!(g.is_complete(), false);
 
-        g = Game::from_transcript(&Transcript::from_string(MANUBU_MARUO));
+        g = Game::from_transcript(Transcript::from_string(MANUBU_MARUO));
         assert_eq!(g.is_complete(), true);
     }
 
@@ -295,7 +288,7 @@ mod tests {
         assert_eq!(dark_score, light_score);
         assert_eq!(dark_score, 2);
 
-        g = Game::from_transcript(&Transcript::from_string(MANUBU_MARUO));
+        g = Game::from_transcript(Transcript::from_string(MANUBU_MARUO));
         let (dark_score, light_score) = g.score();
         assert_eq!(dark_score, 13);
         assert_eq!(light_score, 0);
@@ -303,7 +296,7 @@ mod tests {
 
     #[test]
     fn mem_size() {
-        let g = Game::from_transcript(&Transcript::from_string(MANUBU_MARUO));
+        let g = Game::from_transcript(Transcript::from_string(MANUBU_MARUO));
         println!("Game mem size: {}", mem::size_of_val(&g));
     }
 

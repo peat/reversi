@@ -50,22 +50,6 @@ impl Board {
         output.push_str("\n");
         output
     }
-
-    // a board can be rotated 180 degrees and be the same game
-    pub fn to_rotated(&self) -> Self {
-        let mut positions = self.iter();
-        let mut new_board = Board::empty();
-        loop {
-            match positions.next() {
-                None => return new_board,
-                Some(p) => {
-                    let state = self.get(p.x, p.y);
-                    let rp = p.to_rotated();
-                    new_board.set(rp.x, rp.y, state);
-                }
-            }
-        }
-    }
 }
 
 #[cfg(test)]

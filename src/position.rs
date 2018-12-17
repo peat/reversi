@@ -108,12 +108,22 @@ impl Position {
         self.south()?.west()
     }
 
-    // the board can be rotated 180 degrees and be an identical game
-    pub fn to_rotated(&self) -> Self {
-        Self {
-            x: MAX_X - self.x,
-            y: MAX_Y - self.y,
-        }
+    // Transformations
+
+    pub fn rotate(mut position: Position) -> Position {
+        let tmp_x = position.y;
+        let tmp_y = position.x;
+        position.x = tmp_x;
+        position.y = tmp_y;
+
+        position
+    }
+
+    pub fn flip(mut position: Position) -> Position {
+        position.x = MAX_X - position.x;
+        position.y = MAX_Y - position.y;
+
+        position
     }
 }
 

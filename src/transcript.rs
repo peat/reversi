@@ -59,18 +59,28 @@ impl Transcript {
         output
     }
 
-    pub fn to_position(&self) -> Option<Position> {
-        match self {
-            Transcript::Pass => None,
-            Transcript::Play(p) => Some(*p),
-        }
+    pub fn symmetrical(original: Vec<Transcript>) -> Vec<Vec<Transcript>> {
+        // first position is rotated.
+        let first = Transcript::transform(original.clone(), Position::rotate);
+        // second position is flipped.
+        let second = Transcript::transform(original.clone(), Position::flip);
+        // third position is rotated and flipped.
+        let third = Transcript::transform(first.clone(), Position::flip);
+
+        vec![first, second, third]
     }
 
-    pub fn to_rotated(&self) -> Self {
-        match self.to_position() {
-            None => Transcript::Pass,
-            Some(p) => Transcript::from(p.to_rotated()),
+    fn transform(transcripts: Vec<Transcript>, f: fn(Position) -> Position) -> Vec<Self> {
+        let mut output = Vec::new();
+        for t in transcripts {
+            let new_t = match t {
+                Transcript::Pass => Transcript::Pass,
+                Transcript::Play(p) => Transcript::Play(f(p)),
+            };
+            output.push(new_t);
         }
+
+        output
     }
 
     fn char_to_x(c: char) -> usize {
@@ -129,7 +139,23 @@ mod tests {
         assert_eq!(transcript_source, Transcript::stringify(&transcript_vec));
 
         // round trip to game
-        let tv_to_game = Game::from_transcript(&transcript_vec);
+        let tv_to_game = Game::from_transcript(transcript_vec.clone());
         assert_eq!(transcript_vec, tv_to_game.transcript);
+    }
+
+    #[test]
+    fn transform_round_trip() {
+        let transcript_source = String::from("C4E3F4G5G4G3E2C3H6C5B4F3H5B3H3A5A4F2G2B5A6H2B6H1H4E1G1B7D1H7C6A7A2F1B8D3A8F5C2B2A3D6E7C1B1C7D8A1F6D2G6F8D7G7E6C8E8PPF7PPH8G8PP");
+        let transcript_vec = Transcript::from_string(&transcript_source);
+
+        // two flips should return to original
+        let flip_one = Transcript::transform(transcript_vec.clone(), Position::flip);
+        let flip_two = Transcript::transform(flip_one.clone(), Position::flip);
+        assert_eq!(transcript_vec, flip_two);
+
+        // two rotates should return to original
+        let rotate_one = Transcript::transform(transcript_vec.clone(), Position::rotate);
+        let rotate_two = Transcript::transform(rotate_one.clone(), Position::rotate);
+        assert_eq!(transcript_vec, rotate_two);
     }
 }
