@@ -127,7 +127,7 @@ fn demos() {
 
     println!("\n------------\n");
 
-    let loops = 1_000;
+    let loops = 10_000;
 
     println!(
         "Benchmark the depth first solver and transcripts ({} games)...\n",
@@ -145,7 +145,9 @@ fn demos() {
         transcripts.push(Transcript::stringify(&g.transcript))
     }
 
-    println!("  Generated games in {:?}", timer.elapsed());
+    elapsed = timer.elapsed();
+
+    println!("  Generated games in {:?} ({:?} per game)", elapsed, elapsed / loops);
 
     // Simple benchmark for playing the same game n times from a transcript
     let mut loop_results = Vec::new();
