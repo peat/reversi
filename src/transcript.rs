@@ -67,7 +67,7 @@ impl Transcript {
         // third position is rotated and flipped.
         let third = Transcript::transform(first.clone(), Position::flip);
 
-        vec![first, second, third]
+        vec![first, second, third, original]
     }
 
     fn transform(transcripts: Vec<Transcript>, f: fn(Position) -> Position) -> Vec<Self> {
