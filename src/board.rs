@@ -34,7 +34,10 @@ impl Board {
         PositionIter::new()
     }
 
-    pub fn to_string(&self) -> String {
+}
+
+impl std::fmt::Display for Board {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let mut output = String::new();
         output.push_str("  a b c d e f g h");
         for y in 0..=MAX_Y {
@@ -48,7 +51,7 @@ impl Board {
             }
         }
         output.push_str("\n");
-        output
+        write!(f, "{}", output)
     }
 }
 
