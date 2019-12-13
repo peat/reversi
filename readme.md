@@ -6,7 +6,7 @@ It does _not_ have an interactive playing mode!
 
 Currently supports:
 
-- Iterating game generators that can create ~55,000 finished games per second (single core).
+- Extremely fast game completion: over 1.3M completed games per second (2019 MacBook Pro).
 - Importing and exporting game transcripts at any stage of a game.
 
 Take a look at `src/main.rs` for the different examples of how it works.

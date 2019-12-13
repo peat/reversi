@@ -1,4 +1,5 @@
 mod board;
+mod collector;
 mod contest;
 mod direction;
 mod disk;
@@ -9,8 +10,12 @@ mod transcript;
 
 extern crate rand;
 extern crate sha2;
+extern crate rayon;
+
+use rayon::prelude::*;
 
 use crate::contest::{Contest, Player};
+use crate::collector::Collector;
 use crate::game::Game;
 use crate::solvers::incremental::Incremental;
 use crate::solvers::random::{Random, Seed};
@@ -18,13 +23,15 @@ use crate::transcript::{Transcript, MANUBU_MARUO};
 
 use std::env;
 use std::time::Instant;
+use std::sync::mpsc::Sender;
 
 fn main() {
     match env::args().last() {
         None => help(),
         Some(raw_mode) => match raw_mode.to_ascii_lowercase().trim() {
             "demos" => demos(),
-            "incremental" => incremental(),
+            "generate" => generate(),
+            "benchmark" => benchmark(),
             "random" => random(),
             _ => help(),
         },
@@ -37,27 +44,51 @@ fn help() {
     println!("Available options:");
     println!();
     println!("  demos            Spits out a series of demos and benchmarking info.");
-    println!("  incremental      Generates non-repeating transcripts.");
+    println!("  generate         Prints non-repeating transcripts.");
+    println!("  benchmark        How fast can I generate games? 😅");
     println!("  random           Generates random transcripts.");
     println!("  help             This screen.");
     println!();
 }
 
-fn incremental() {
-    let game = Game::new();
+fn run_incremental(game: &Game, collector: Sender<Vec<Transcript>> ) {
     let mut s = Incremental::new(&game);
     loop {
         match s.next() {
             None => return,
             Some(result) => {
-                println!("{}", Transcript::stringify(&result.transcript));
-                let symmetrical = Transcript::symmetrical(result.transcript);
-                for s in symmetrical {
-                    println!("{}", Transcript::stringify(&s));
+                for g in Transcript::symmetrical(result.transcript) {
+                    collector.send(g).unwrap();
                 }
             }
         }
     }
+}
+
+fn generate() {
+    let parallel = crate::solvers::parallel::Parallel::new();
+    let mut printer = collector::Printer::new();
+
+    let game_printers: Vec<(Game, Sender<Vec<Transcript>>)> = parallel.queue
+        .into_iter()
+        .map( |g| (g, printer.sender() ))
+        .collect();
+
+    let _counter_handle = std::thread::spawn( move || { printer.start() } );
+    game_printers.into_par_iter().for_each(move |(g,c)| { run_incremental(&g, c)});
+}
+
+fn benchmark() {
+    let parallel = crate::solvers::parallel::Parallel::new();
+    let mut counter = collector::Counter::new();
+
+    let game_counters: Vec<(Game, Sender<Vec<Transcript>>)> = parallel.queue
+            .into_iter()
+            .map( |g| (g, counter.sender() ))
+            .collect();
+    
+    let _counter_handle = std::thread::spawn( move || { counter.start() } );
+    game_counters.into_par_iter().for_each(move |(g,c)| { run_incremental(&g, c)});
 }
 
 fn random() {
@@ -176,3 +207,6 @@ fn demos() {
 
     println!();
 }
+
+
+
