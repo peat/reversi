@@ -145,7 +145,7 @@ impl Game {
     }
 
     pub fn valid_moves(&self) -> Vec<ValidMove> {
-        self.move_iter().map(|m| m.clone()).collect()
+        self.move_iter().collect()
     }
 
     pub fn pp(&self) {
