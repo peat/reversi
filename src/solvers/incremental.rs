@@ -1,19 +1,9 @@
-use crate::game::{Game, ValidMove};
+use crate::game::Game;
+use crate::solvers::Node;
 
-struct Node {
-    game: Game,
-    valid_moves: Vec<ValidMove>,
-}
+// depth first traversal of the game tree
 
-impl Node {
-    fn new(g: &Game) -> Node {
-        let game = g.clone();
-        let mut valid_moves = g.valid_moves();
-        valid_moves.reverse(); // these are popped, so first used should be last in vec
-        Node { game, valid_moves }
-    }
-}
-
+#[derive(Clone)]
 pub struct Incremental {
     index: Vec<Node>,
 }
@@ -53,7 +43,7 @@ impl Iterator for Incremental {
 
             match current_node.valid_moves.pop() {
                 None => {
-                    // no moves remaining; check to see if the game is complete.
+                    // no moves remaining
                     if current_node.game.is_complete() {
                         // revert up the stack until we find a node with available moves.
                         self.trim();
