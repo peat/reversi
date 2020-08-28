@@ -17,8 +17,8 @@ impl Seed {
 
     pub fn from_string(string: String) -> Self {
         let mut hasher = Sha256::default();
-        hasher.input(string.clone());
-        let result = hasher.result();
+        hasher.update(string.clone());
+        let result = hasher.finalize();
         let mut value: [u8; 32] = [0; 32];
         for idx in 0..Self::SEED_LENGTH {
             value[idx] = result[idx];
